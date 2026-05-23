@@ -45,12 +45,6 @@ export class UserRepository extends BaseRepository implements IUserRepository {
           images: {
             where: { isPrimary: true },
             take: 1
-          },
-          plant: {
-            select: {
-              id: true,
-              name: true
-            }
           }
         }
       });
