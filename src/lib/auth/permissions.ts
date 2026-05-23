@@ -47,7 +47,7 @@ export const moduleAccess: Record<string, UserRole[]> = {
   // New Supplier Entry - Admin, Store Manager
   "/suppliers/new": ["ADMIN", "STORE_MANAGER"],
   
-  // New Machine Entry - Admin, Store Manager
+  // New Machine Entry - Admin, Store Manager 
   "/machines/new": ["ADMIN", "STORE_MANAGER"],
   
   // QR Code - Store Manager, Admin
