@@ -54,8 +54,8 @@ export default async function ToolEntryPage() {
     );
   }
 
-  // Check if user has store assigned
-  if (!storeId) {
+  // Check if user has store assigned (Admin can access without store assignment)
+  if (!storeId && userRole !== "ADMIN") {
     return (
       <AppShell>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -70,9 +70,9 @@ export default async function ToolEntryPage() {
     );
   }
 
-  // Fetch items/components filtered by user's store
+  // Fetch items/components filtered by user's store (Admin sees all stores)
   const items = await prisma.item.findMany({
-    where: {
+    where: userRole === "ADMIN" ? {} : {
       storeId
     },
     select: {

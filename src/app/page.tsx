@@ -45,7 +45,8 @@ export default async function Home() {
     redirect("/login");
   }
   
-  if (!user.storeId) {
+  // Admin can access dashboard without store assignment
+  if (!user.storeId && user.role !== "ADMIN") {
     return (
       <AppShell>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -63,7 +64,8 @@ export default async function Home() {
     );
   }
   
-  const data = await getDashboardData(user.storeId);
+  // Admin sees all stores data, others see their store data
+  const data = await getDashboardData(user.role === "ADMIN" ? null : user.storeId);
 
   return <DashboardView data={data} />;
 }

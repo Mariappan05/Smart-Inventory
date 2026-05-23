@@ -5,17 +5,21 @@ import { BaseRepository, type PageOptions, type PageResult } from "@/repositorie
 import { toRepositoryError } from "@/repositories/base/repositoryError";
 import type { IProductRepository } from "@/repositories/types";
 
-export async function getDashboardSnapshot(storeId: string): Promise<DashboardData> {
-  const storeFilter = { storeId };
-  const movementFilter = {
+export async function getDashboardSnapshot(storeId: string | null): Promise<DashboardData> {
+  // Admin sees all stores (storeId = null), others see their store
+  const storeFilter = storeId ? { storeId } : {};
+  const movementFilter = storeId ? {
     OR: [
       { fromStoreId: storeId },
       { toStoreId: storeId }
     ]
-  };
-  const alertFilter = { storeId };
-  const scheduleFilter = { storeId };
-  const toolFilter = { storeId };
+  } : {};
+  const alertFilter = storeId ? { storeId } : {};
+  const scheduleFilter = storeId ? { storeId } : {};
+  const toolFilter = storeId ? { storeId } : {};
+  const inwardFilter = storeId ? { toStoreId: storeId } : {};
+  const outwardFilter = storeId ? { fromStoreId: storeId } : {};
+  const qrFilter = storeId ? { storeId } : {};
 
   const [
     // Product Entry
@@ -80,13 +84,13 @@ export async function getDashboardSnapshot(storeId: string): Promise<DashboardDa
     prisma.tentativeMonthlySchedule.count({ where: storeFilter }),
     
     // Inward Process
-    prisma.productInLog.count({ where: { toStoreId: storeId } }),
+    prisma.productInLog.count({ where: inwardFilter }),
     
     // Outward Process
-    prisma.productOutLog.count({ where: { fromStoreId: storeId } }),
+    prisma.productOutLog.count({ where: outwardFilter }),
     
     // QR Scans
-    prisma.qrScanLog.count({ where: { storeId } }),
+    prisma.qrScanLog.count({ where: qrFilter }),
     
     // Alerts
     prisma.securityAlert.count({ where: { ...alertFilter, status: "OPEN" } }),
@@ -118,7 +122,7 @@ export async function getDashboardSnapshot(storeId: string): Promise<DashboardDa
     
     // Recent inward logs
     prisma.productInLog.findMany({
-      where: { toStoreId: storeId },
+      where: inwardFilter,
       take: 3,
       orderBy: { inAt: "desc" },
       include: {
@@ -140,7 +144,7 @@ export async function getDashboardSnapshot(storeId: string): Promise<DashboardDa
     
     // Recent outward logs
     prisma.productOutLog.findMany({
-      where: { fromStoreId: storeId },
+      where: outwardFilter,
       take: 3,
       orderBy: { outAt: "desc" },
       include: {
@@ -162,7 +166,7 @@ export async function getDashboardSnapshot(storeId: string): Promise<DashboardDa
     
     // Recent QR scans
     prisma.qrScanLog.findMany({
-      where: { storeId },
+      where: qrFilter,
       take: 3,
       orderBy: { scannedAt: "desc" },
       include: {

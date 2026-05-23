@@ -31,32 +31,32 @@ const allNavItems = [
   // Outward - Outward Person, Admin, Store Manager
   { label: "Outward", icon: ArrowLeftRight, href: "/outward", roles: ["OUTWARD_PERSON", "ADMIN", "STORE_MANAGER"] },
   
+  // Products - Admin, Store Manager
+  { label: "Products", icon: Package, href: "/products", roles: ["ADMIN", "STORE_MANAGER"] },
+  
+  // Tools - Admin, Store Manager
+  { label: "Tools", icon: Wrench, href: "/tools", roles: ["ADMIN", "STORE_MANAGER"] },
+  
+  // Suppliers - Admin, Store Manager
+  { label: "Suppliers", icon: Tag, href: "/suppliers/new", roles: ["ADMIN", "STORE_MANAGER"] },
+  
+  // Machines - Admin, Store Manager
+  { label: "Machines", icon: Warehouse, href: "/machines/new", roles: ["ADMIN", "STORE_MANAGER"] },
+  
   // Supplier Schedule - Admin, Store Manager
   { label: "Supplier Schedule", icon: Calendar, href: "/schedules/supplier", roles: ["ADMIN", "STORE_MANAGER"] },
   
   // Supplier PO - Admin, Store Manager
   { label: "Supplier PO", icon: FileText, href: "/supplier-po", roles: ["ADMIN", "STORE_MANAGER"] },
   
-  // New Product Entry - Admin, Store Manager
-  { label: "New Product", icon: Package, href: "/products/new", roles: ["ADMIN", "STORE_MANAGER"] },
-  
-  // New Tool Entry - Admin, Store Manager
-  { label: "New Tool", icon: Wrench, href: "/tools/new", roles: ["ADMIN", "STORE_MANAGER"] },
-  
-  // New Supplier Entry - Admin, Store Manager
-  { label: "New Supplier", icon: Tag, href: "/suppliers/new", roles: ["ADMIN", "STORE_MANAGER"] },
-  
-  // New Store Entry - Admin only
-  { label: "Stores", icon: Building2, href: "/stores", roles: ["ADMIN"] },
-  
-  // New Machine Entry - Admin, Store Manager
-  { label: "New Machine", icon: Warehouse, href: "/machines/new", roles: ["ADMIN", "STORE_MANAGER"] },
-  
   // QR Code - Admin, Store Manager
   { label: "QR Code", icon: QrCode, href: "/qr", roles: ["ADMIN", "STORE_MANAGER"] },
   
+  // Machine IO - Admin, Store Manager
+  { label: "Machine IO", icon: ArrowLeftRight, href: "/machine-io", roles: ["ADMIN", "STORE_MANAGER"] },
+  
   // Request - Sub Store, Admin, Store Manager
-  { label: "Request", icon: FileText, href: "/products/request", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"] },
+  { label: "Request", icon: FileText, href: "/request", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"] },
   
   // Weekly Schedule - Sub Store, Admin, Store Manager
   { label: "Weekly Schedule", icon: Calendar, href: "/schedules", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"] },
@@ -64,8 +64,23 @@ const allNavItems = [
   // Production Entry - Sub Store, Admin, Store Manager
   { label: "Production Entry", icon: Package, href: "/production", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"] },
   
+  // Categories - Admin, Store Manager
+  { label: "Categories", icon: Tag, href: "/categories", roles: ["ADMIN", "STORE_MANAGER"] },
+  
+  // Store Rooms - Admin, Store Manager
+  { label: "Store Rooms", icon: Warehouse, href: "/store-rooms", roles: ["ADMIN", "STORE_MANAGER"] },
+  
+  // Maintenance - Admin, Store Manager
+  { label: "Maintenance", icon: Wrench, href: "/maintenance", roles: ["ADMIN", "STORE_MANAGER"] },
+  
+  // Reports - Admin, Store Manager
+  { label: "Reports", icon: FileText, href: "/reports", roles: ["ADMIN", "STORE_MANAGER"] },
+  
   // Alerts - Admin, Store Manager, Employee
-  { label: "Alerts", icon: Shield, href: "/alerts", roles: ["ADMIN", "STORE_MANAGER", "EMPLOYEE"] },
+  { label: "Alerts", icon: Shield, href: "/alerts", roles: ["ADMIN", "ADMIN_MANAGER", "STORE_MANAGER", "EMPLOYEE"] },
+  
+  // Stores - Admin only
+  { label: "Stores", icon: Building2, href: "/stores", roles: ["ADMIN"] },
   
   // Users - Admin only
   { label: "Users", icon: Users, href: "/users", roles: ["ADMIN"] },

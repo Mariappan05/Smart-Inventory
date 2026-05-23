@@ -37,17 +37,20 @@ export const moduleAccess: Record<string, UserRole[]> = {
   // Supplier Wise PO - Admin, Store Manager
   "/supplier-po": ["ADMIN", "STORE_MANAGER"],
   
-  // New Product Entry - Admin, Store Manager
+  // Products - Admin, Store Manager
+  "/products": ["ADMIN", "STORE_MANAGER"],
   "/products/new": ["ADMIN", "STORE_MANAGER"],
   
-  // New Tool Entry - Admin, Store Manager
-  "/tools/new": ["ADMIN", "STORE_MANAGER"],
+  // Tools - Admin, Store Manager
   "/tools": ["ADMIN", "STORE_MANAGER"],
+  "/tools/new": ["ADMIN", "STORE_MANAGER"],
   
-  // New Supplier Entry - Admin, Store Manager
+  // Suppliers - Admin, Store Manager
+  "/suppliers": ["ADMIN", "STORE_MANAGER"],
   "/suppliers/new": ["ADMIN", "STORE_MANAGER"],
   
-  // New Machine Entry - Admin, Store Manager 
+  // Machines - Admin, Store Manager 
+  "/machines": ["ADMIN", "STORE_MANAGER"],
   "/machines/new": ["ADMIN", "STORE_MANAGER"],
   
   // QR Code - Store Manager, Admin
@@ -57,12 +60,33 @@ export const moduleAccess: Record<string, UserRole[]> = {
   "/products/request": ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"],
   "/request": ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"],
   
-  // Weekly Schedule - Sub Store, Admin, Store Manager
+  // Schedules - Sub Store, Admin, Store Manager
   "/schedules": ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"],
+  "/schedules/tentative": ["ADMIN", "STORE_MANAGER"],
+  "/schedules/final": ["ADMIN", "STORE_MANAGER"],
+  "/schedules/expired": ["ADMIN", "STORE_MANAGER"],
   "/weekly-schedule": ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"],
   
   // Production Entry - Sub Store, Admin, Store Manager
   "/production": ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"],
+  
+  // Categories - Admin, Store Manager
+  "/categories": ["ADMIN", "STORE_MANAGER"],
+  
+  // Store Rooms - Admin, Store Manager
+  "/store-rooms": ["ADMIN", "STORE_MANAGER"],
+  
+  // Machine IO - Admin, Store Manager
+  "/machine-io": ["ADMIN", "STORE_MANAGER"],
+  
+  // Maintenance - Admin, Store Manager
+  "/maintenance": ["ADMIN", "STORE_MANAGER"],
+  
+  // Reports - Admin, Store Manager
+  "/reports": ["ADMIN", "STORE_MANAGER"],
+  
+  // Alerts - Admin, Store Manager, Employee
+  "/alerts": ["ADMIN", "ADMIN_MANAGER", "STORE_MANAGER", "EMPLOYEE"],
   
   // Profile - Accessible to all authenticated users
   "/profile": ["ADMIN", "ADMIN_MANAGER", "STORE_MANAGER", "EMPLOYEE", "SUB_STORE_LOGIN", "INWARD_PERSON", "OUTWARD_PERSON"],
@@ -70,39 +94,12 @@ export const moduleAccess: Record<string, UserRole[]> = {
   // Dashboard - Accessible to all authenticated users
   "/": ["ADMIN", "ADMIN_MANAGER", "STORE_MANAGER", "EMPLOYEE", "SUB_STORE_LOGIN", "INWARD_PERSON", "OUTWARD_PERSON"],
   "/dashboard": ["ADMIN", "ADMIN_MANAGER", "STORE_MANAGER", "EMPLOYEE", "SUB_STORE_LOGIN", "INWARD_PERSON", "OUTWARD_PERSON"],
-  
-  // Optional modules (kept for backward compatibility if they exist)
-  "/alerts": ["ADMIN", "ADMIN_MANAGER", "STORE_MANAGER", "EMPLOYEE"],
-  "/reports": ["ADMIN", "STORE_MANAGER"],
-  "/schedules/plan": ["ADMIN", "STORE_MANAGER"],
-  "/schedules/final": ["ADMIN", "STORE_MANAGER"],
 };
 
 // Role-based permissions for rolePermissions
 export const rolePermissions: Record<UserRole, string[]> = {
   ADMIN: [
-    "/monthly-plan",
-    "/inward",
-    "/outward",
-    "/schedules/supplier",
-    "/supplier-po",
-    "/products/new",
-    "/tools/new",
-    "/tools",
-    "/suppliers/new",
-    "/stores",
-    "/users",
-    "/machines/new",
-    "/qr",
-    "/products/request",
-    "/request",
-    "/schedules",
-    "/weekly-schedule",
-    "/production",
-    "/alerts",
-    "/reports",
-    "/profile",
-    "/",
+    "*", // Admin has full access to all routes
   ],
   ADMIN_MANAGER: [
     "/monthly-plan",
@@ -240,9 +237,14 @@ export async function requireAdmin(request: NextRequest): Promise<UserSession | 
 }
 
 export function canAccessPath(role: UserRole, pathname: string): boolean {
+  // Admin has full access to everything
+  if (role === "ADMIN") {
+    return true;
+  }
+
   // Check strict admin-only paths first
   if (strictAdminOnlyPaths.some(path => pathname === path || pathname.startsWith(path + "/"))) {
-    return role === "ADMIN";
+    return false;
   }
 
   const permissions = rolePermissions[role];
@@ -261,6 +263,11 @@ export function canAccessPath(role: UserRole, pathname: string): boolean {
 }
 
 export function canAccessModule(role: UserRole, modulePath: string): boolean {
+  // Admin has full access to all modules
+  if (role === "ADMIN") {
+    return true;
+  }
+
   // Find the module in moduleAccess by checking exact match or prefix
   let allowedRoles: UserRole[] | undefined;
   

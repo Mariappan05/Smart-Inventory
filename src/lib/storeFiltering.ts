@@ -3,28 +3,24 @@ import { UserSession } from "@/lib/auth/permissions";
 /**
  * Store-Based Filtering Utility
  * 
- * SPECIAL CASE: admin@your-company.local has global access ONLY for Users and Stores pages
- * For all other pages (Products, Items, Tools, etc.), they see only their assigned store data.
+ * ADMIN role has full access to all stores across all pages.
+ * Other roles see only their assigned store data.
  */
-
-const GLOBAL_ACCESS_EMAIL = "admin@your-company.local";
 
 /**
- * Check if user has global access to all stores
- * @param allowGlobalAccess - Set to true only for Users and Stores pages
+ * Check if user has global access to all stores based on role
  */
-function hasGlobalAccess(session: UserSession, allowGlobalAccess: boolean = false): boolean {
-  if (!allowGlobalAccess) return false;
-  return session.email === GLOBAL_ACCESS_EMAIL;
+function hasGlobalAccess(session: UserSession): boolean {
+  return session.role === "ADMIN";
 }
 
 /**
  * Get WHERE clause for filtering by store
- * Global admin sees all stores ONLY when allowGlobalAccess is true (Users/Stores pages)
+ * Admin sees all stores, other roles see only their assigned store
  */
 export function getStoreWhereClause(session: UserSession, allowGlobalAccess: boolean = false) {
-  if (hasGlobalAccess(session, allowGlobalAccess)) {
-    return {}; // No filter - see all stores
+  if (hasGlobalAccess(session)) {
+    return {}; // No filter - Admin sees all stores
   }
   
   if (!session.storeId) {
@@ -38,7 +34,10 @@ export function getStoreWhereClause(session: UserSession, allowGlobalAccess: boo
  * Get WHERE clause for tables with fromStoreId (like ProductOutLog)
  */
 export function getFromStoreWhereClause(session: UserSession) {
-  // No global access for movement logs
+  if (hasGlobalAccess(session)) {
+    return {}; // Admin sees all stores
+  }
+  
   if (!session.storeId) {
     return { fromStoreId: "IMPOSSIBLE_STORE_ID" };
   }
@@ -50,7 +49,10 @@ export function getFromStoreWhereClause(session: UserSession) {
  * Get WHERE clause for tables with toStoreId (like ProductInLog)
  */
 export function getToStoreWhereClause(session: UserSession) {
-  // No global access for movement logs
+  if (hasGlobalAccess(session)) {
+    return {}; // Admin sees all stores
+  }
+  
   if (!session.storeId) {
     return { toStoreId: "IMPOSSIBLE_STORE_ID" };
   }
@@ -62,7 +64,10 @@ export function getToStoreWhereClause(session: UserSession) {
  * Get WHERE clause for movement logs (fromStoreId OR toStoreId)
  */
 export function getMovementStoreWhereClause(session: UserSession) {
-  // No global access for movement logs
+  if (hasGlobalAccess(session)) {
+    return {}; // Admin sees all stores
+  }
+  
   if (!session.storeId) {
     return { 
       OR: [
@@ -82,20 +87,24 @@ export function getMovementStoreWhereClause(session: UserSession) {
 
 /**
  * Check if user can access a specific store
- * Global admin can access all stores ONLY on Users/Stores pages
+ * Admin can access all stores
  */
 export function canUserAccessStore(session: UserSession, storeId: string | null, allowGlobalAccess: boolean = false): boolean {
-  if (hasGlobalAccess(session, allowGlobalAccess)) {
-    return true; // Can access any store
+  if (hasGlobalAccess(session)) {
+    return true; // Admin can access any store
   }
   return session.storeId === storeId;
 }
 
 /**
  * Get storeId for create operations
- * Always use user's assigned store for create operations
+ * Admin can create in any store (use provided storeId or null)
+ * Other roles use their assigned store
  */
-export function getStoreIdForCreate(session: UserSession): string | null {
+export function getStoreIdForCreate(session: UserSession, requestedStoreId?: string | null): string | null {
+  if (hasGlobalAccess(session)) {
+    return requestedStoreId || session.storeId || null;
+  }
   return session.storeId || null;
 }
 
@@ -103,6 +112,10 @@ export function getStoreIdForCreate(session: UserSession): string | null {
  * Validate that user can create in the requested store
  */
 export function validateStoreAccess(session: UserSession, requestedStoreId?: string | null): boolean {
+  if (hasGlobalAccess(session)) {
+    return true; // Admin can create in any store
+  }
+  
   if (!requestedStoreId) {
     return !!session.storeId;
   }
@@ -202,8 +215,8 @@ export const STORE_ACCESS_ERRORS = {
  * Throw error if user doesn't have store access
  */
 export function requireStoreAccess(session: UserSession, storeId?: string | null, allowGlobalAccess: boolean = false): void {
-  if (hasGlobalAccess(session, allowGlobalAccess)) {
-    return; // Global admin has access to all stores on Users/Stores pages
+  if (hasGlobalAccess(session)) {
+    return; // Admin has access to all stores
   }
   
   if (!session.storeId) {
