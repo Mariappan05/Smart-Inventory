@@ -637,33 +637,34 @@ export function ToolEntryView({ items }: Props) {
 
       {/* All Tools Table */}
       <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 overflow-hidden">
-        <div className="border-b border-slate-200 bg-slate-50 px-6 py-3 dark:border-slate-700 dark:bg-slate-800/50">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+        <div className="border-b border-slate-200 bg-slate-50 px-3 sm:px-6 py-3 dark:border-slate-700 dark:bg-slate-800/50">
+          <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
             All Tools
           </h2>
         </div>
 
         {selectedIds.size > 0 && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 px-6 py-3 flex items-center justify-between">
-            <span className="text-sm text-slate-700 dark:text-slate-300">
+          <div className="bg-blue-50 dark:bg-blue-900/20 px-3 sm:px-6 py-3 flex items-center justify-between">
+            <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
               {selectedIds.size} tool(s) selected
             </span>
             <button
               onClick={() => setShowBulkDeleteConfirm(true)}
               disabled={submitting}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm disabled:opacity-50"
+              className="inline-flex items-center gap-1 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-xs sm:text-sm disabled:opacity-50"
             >
-              <Trash2 className="h-4 w-4" />
-              Delete Selected
+              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Delete Selected</span>
+              <span className="sm:hidden">Delete</span>
             </button>
           </div>
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-700/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <th className="hidden sm:table-cell px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
                   <input
                     type="checkbox"
                     checked={tools.length > 0 && selectedIds.size === tools.length}
@@ -671,25 +672,25 @@ export function ToolEntryView({ items }: Props) {
                     className="rounded border-slate-300 dark:border-slate-600"
                   />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <th className="px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Product
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <th className="hidden sm:table-cell px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Tool Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <th className="hidden md:table-cell px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Supplier
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <th className="hidden lg:table-cell px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Code
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <th className="hidden lg:table-cell px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Rate
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <th className="hidden xl:table-cell px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Operations
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <th className="px-3 py-3 text-center text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Actions
                 </th>
               </tr>
@@ -697,23 +698,23 @@ export function ToolEntryView({ items }: Props) {
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={8} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Loading tools...
+                      <span className="text-sm">Loading tools...</span>
                     </div>
                   </td>
                 </tr>
               ) : tools.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={8} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
                     No tools created yet
                   </td>
                 </tr>
               ) : (
                 tools.map((tool) => (
                   <tr key={tool.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                    <td className="px-6 py-4">
+                    <td className="hidden sm:table-cell px-3 py-3">
                       <input
                         type="checkbox"
                         checked={selectedIds.has(tool.id)}
@@ -721,48 +722,53 @@ export function ToolEntryView({ items }: Props) {
                         className="rounded border-slate-300 dark:border-slate-600"
                       />
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                    <td className="px-3 py-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 font-medium">
                       {getItemName(tool.itemId)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                    <td className="hidden sm:table-cell px-3 py-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                       {tool.toolName}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                    <td className="hidden md:table-cell px-3 py-3 text-xs text-slate-900 dark:text-slate-100">
                       {tool.supplierName}
                     </td>
-                    <td className="px-6 py-4 text-sm font-mono text-slate-900 dark:text-slate-100">
+                    <td className="hidden lg:table-cell px-3 py-3 text-xs font-mono text-slate-900 dark:text-slate-100">
                       {tool.supplierCode}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                    <td className="hidden lg:table-cell px-3 py-3 text-xs text-slate-900 dark:text-slate-100">
                       ${tool.rate.toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="hidden xl:table-cell px-3 py-3 text-xs">
                       <div className="flex flex-wrap gap-1">
-                        {tool.operations.map((op, idx) => (
+                        {tool.operations.slice(0, 2).map((op, idx) => (
                           <span
                             key={idx}
-                            className="inline-block bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 px-2 py-1 rounded text-xs font-medium"
+                            className="inline-block bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded text-xs font-medium"
                           >
                             {op.name} (LS: {op.lifeSpan})
                           </span>
                         ))}
+                        {tool.operations.length > 2 && (
+                          <span className="inline-block bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded text-xs font-medium">
+                            +{tool.operations.length - 2} more
+                          </span>
+                        )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex gap-2">
+                    <td className="px-3 py-3 text-center">
+                      <div className="flex gap-1 items-center justify-center">
                         <button
                           onClick={() => handleEditOpen(tool)}
                           className="p-1 text-blue-600 hover:bg-blue-50 rounded dark:text-blue-400 dark:hover:bg-blue-900/20"
                           title="Edit tool"
                         >
-                          <Edit2 className="h-4 w-4" />
+                          <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </button>
                         <button
                           onClick={() => setShowDeleteConfirm(tool.id)}
                           className="p-1 text-red-600 hover:bg-red-50 rounded dark:text-red-400 dark:hover:bg-red-900/20"
                           title="Delete tool"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </button>
                       </div>
                     </td>
@@ -776,9 +782,9 @@ export function ToolEntryView({ items }: Props) {
 
       {/* Edit Tool Modal */}
       {editingToolId && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 p-6">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-3 sm:p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-t-3xl sm:rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Edit Tool</h3>
               <button
                 onClick={handleEditCancel}
@@ -788,7 +794,7 @@ export function ToolEntryView({ items }: Props) {
               </button>
             </div>
 
-            <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleEditSubmit} className="p-4 sm:p-6 space-y-6">
               {/* Tool Name */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">

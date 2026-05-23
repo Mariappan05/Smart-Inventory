@@ -234,41 +234,41 @@ export function UsersView({ initialUsers, stores }: UsersViewProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-                <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Photo</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">ID</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Name</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Email</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Role</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Store</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Status</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Created</th>
-                <th className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-300">Actions</th>
+                <th className="hidden sm:table-cell px-3 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Photo</th>
+                <th className="px-3 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">ID</th>
+                <th className="px-3 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Name</th>
+                <th className="hidden sm:table-cell px-3 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Email</th>
+                <th className="hidden md:table-cell px-3 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Role</th>
+                <th className="hidden lg:table-cell px-3 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Store</th>
+                <th className="hidden lg:table-cell px-3 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Status</th>
+                <th className="hidden xl:table-cell px-3 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Created</th>
+                <th className="px-3 py-3 text-center font-semibold text-slate-700 dark:text-slate-300">Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">No users found</td>
+                  <td colSpan={9} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400">No users found</td>
                 </tr>
               ) : (
                 users.map((user, index) => (
                   <tr key={user.id} className="stagger-item border-b border-slate-200 transition-all duration-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800" style={{ animationDelay: `${index * 0.05}s` }}>
-                    <td className="px-4 py-3">
-                      <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100 shadow-sm transition-all duration-300 hover:scale-110 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600">
+                    <td className="hidden sm:table-cell px-3 py-3">
+                      <div className="h-12 w-12 overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100 shadow-sm transition-all duration-300 hover:scale-110 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600">
                         {user.imageUrl ? (
                           <img src={user.imageUrl} alt={user.name} className="h-full w-full object-cover" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-900 to-slate-700 text-white dark:from-slate-100 dark:to-slate-300 dark:text-slate-900">
-                            <User className="h-8 w-8" />
+                            <User className="h-6 w-6" />
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">{user.employeeNo || "-"}</td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{user.name}</td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{user.email}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    <td className="px-3 py-3 font-medium text-slate-900 text-xs sm:text-sm dark:text-slate-100">{user.employeeNo || "-"}</td>
+                    <td className="px-3 py-3 text-slate-600 font-medium dark:text-slate-400">{user.name}</td>
+                    <td className="hidden sm:table-cell px-3 py-3 text-slate-600 text-xs sm:text-sm dark:text-slate-400">{user.email}</td>
+                    <td className="hidden md:table-cell px-3 py-3">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
                         user.role === "ADMIN" 
                           ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
                           : user.role === "ADMIN_MANAGER"
@@ -283,43 +283,43 @@ export function UsersView({ initialUsers, stores }: UsersViewProps) {
                           ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
                           : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                       }`}>
-                        {user.role === "SUB_STORE_LOGIN" ? "Sub Store" : user.role === "ADMIN_MANAGER" ? "Admin Manager" : user.role === "STORE_MANAGER" ? "Store Manager" : user.role === "INWARD_PERSON" ? "Inward Person" : user.role === "OUTWARD_PERSON" ? "Outward Person" : user.role}
+                        {user.role === "SUB_STORE_LOGIN" ? "Sub" : user.role === "ADMIN_MANAGER" ? "Mgr" : user.role === "STORE_MANAGER" ? "Store" : user.role === "INWARD_PERSON" ? "In" : user.role === "OUTWARD_PERSON" ? "Out" : user.role}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
-                      {user.store?.name || (user.storeId ? "Unknown Store" : "Not Assigned")}
+                    <td className="hidden lg:table-cell px-3 py-3 text-sm text-slate-600 dark:text-slate-400">
+                      {user.store?.name || (user.storeId ? "Unknown" : "-")}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    <td className="hidden lg:table-cell px-3 py-3">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
                         user.isActive 
                           ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
                           : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                       }`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${user.isActive ? "bg-green-500" : "bg-red-500"}`} />
+                        <span className={`h-1 w-1 rounded-full ${user.isActive ? "bg-green-500" : "bg-red-500"}`} />
                         {user.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{fmtDate(user.createdAt)}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="hidden xl:table-cell px-3 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{fmtDate(user.createdAt)}</td>
+                    <td className="px-3 py-3 text-center">
                       {isAdmin && (
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1">
                           <button
                             onClick={() => handleEdit(user)}
-                            className="p-2 text-slate-600 hover:bg-blue-100 hover:text-blue-600 rounded transition-colors dark:text-slate-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+                            className="p-1.5 text-slate-600 hover:bg-blue-100 hover:text-blue-600 rounded transition-colors dark:text-slate-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
                             title="Edit user"
                           >
-                            <Edit2 className="h-4 w-4" />
+                            <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(user.id, user.name)}
                             disabled={deleting === user.id}
-                            className="p-2 text-slate-600 hover:bg-red-100 hover:text-red-600 rounded transition-colors disabled:opacity-50 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                            className="p-1.5 text-slate-600 hover:bg-red-100 hover:text-red-600 rounded transition-colors disabled:opacity-50 dark:text-slate-400 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                             title="Delete user"
                           >
                             {deleting === user.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                             ) : (
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             )}
                           </button>
                         </div>
@@ -334,8 +334,8 @@ export function UsersView({ initialUsers, stores }: UsersViewProps) {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md animate-scale-in rounded-3xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-3 sm:p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md max-h-[90vh] animate-scale-in rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xl overflow-y-auto dark:border-slate-700 dark:bg-slate-900">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Add New User</h2>
               <button type="button" onClick={() => setShowModal(false)} className="rounded-lg p-1 hover:bg-slate-100 dark:hover:bg-slate-800">
@@ -513,8 +513,8 @@ export function UsersView({ initialUsers, stores }: UsersViewProps) {
       )}
 
       {showEditModal && editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md animate-scale-in rounded-3xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-3 sm:p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md max-h-[90vh] animate-scale-in rounded-t-3xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xl overflow-y-auto dark:border-slate-700 dark:bg-slate-900">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Edit User</h2>
               <button type="button" onClick={() => setShowEditModal(false)} className="rounded-lg p-1 hover:bg-slate-100 dark:hover:bg-slate-800">

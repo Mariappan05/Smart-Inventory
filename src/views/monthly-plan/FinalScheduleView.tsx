@@ -154,25 +154,25 @@ export function FinalScheduleView({ refreshKey }: FinalScheduleViewProps) {
 
       {/* Schedules Table */}
       <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Customer Name
+              <th className="px-3 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
+                Customer
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Component Name
+              <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
+                Component
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Component Code
+              <th className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
+                Code
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <th className="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
                 Quantity
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-3 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-3 sm:px-6 py-3 text-center text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
                 Actions
               </th>
             </tr>

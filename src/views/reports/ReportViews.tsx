@@ -138,11 +138,11 @@ export function ReportViews() {
         </div>
 
         <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
-          <table className="min-w-full text-sm">
+          <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-600 dark:bg-slate-950/60 dark:text-slate-300">
               <tr>
                 {columns.map((column) => (
-                  <th key={column} className="whitespace-nowrap px-4 py-3 font-semibold uppercase tracking-[0.2em] text-xs">
+                  <th key={column} className="whitespace-nowrap px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold uppercase tracking-[0.2em]">
                     {column.replace(/([A-Z])/g, " $1")}
                   </th>
                 ))}
@@ -151,13 +151,13 @@ export function ReportViews() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={Math.max(columns.length, 1)} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">Loading...</td>
+                  <td colSpan={Math.max(columns.length, 1)} className="px-3 sm:px-4 py-8 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">Loading...</td>
                 </tr>
               ) : report?.data?.length ? (
                 report.data.map((row, index) => (
                   <tr key={index} className="border-t border-slate-200 dark:border-slate-800">
                     {columns.map((column) => (
-                      <td key={column} className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-200">
+                      <td key={column} className="whitespace-nowrap px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-700 dark:text-slate-200">
                         {String(row[column] ?? "-")}
                       </td>
                     ))}
@@ -165,7 +165,7 @@ export function ReportViews() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={Math.max(columns.length, 1)} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">No records found.</td>
+                  <td colSpan={Math.max(columns.length, 1)} className="px-3 sm:px-4 py-8 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">No records found.</td>
                 </tr>
               )}
             </tbody>

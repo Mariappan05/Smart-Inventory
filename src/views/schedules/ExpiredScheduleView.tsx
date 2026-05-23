@@ -73,24 +73,24 @@ export function ExpiredScheduleView() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">
+                  <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Schedule Date
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">
+                  <th className="hidden sm:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Supplier
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">
+                  <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Item
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">
+                  <th className="hidden md:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Store </th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-slate-300">
+                  <th className="hidden lg:table-cell px-3 sm:px-4 py-3 text-right text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Quantity
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">
+                  <th className="hidden xl:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Delivery Date
                   </th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">
+                  <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Status
                   </th>
                 </tr>
@@ -101,30 +101,30 @@ export function ExpiredScheduleView() {
                     key={schedule.id}
                     className="border-b border-slate-200 transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
                   >
-                    <td className="px-4 py-3 text-slate-900 dark:text-slate-100">
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                       {fmtDate(schedule.scheduleDate)}
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                    <td className="hidden sm:table-cell px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                       {schedule.supplier.name}
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                       {schedule.item.name}
                     </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                    <td className="hidden md:table-cell px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                       {schedule.Store.name}
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-slate-100">
+                    <td className="hidden lg:table-cell px-3 sm:px-4 py-3 text-right text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
                       {schedule.quantity}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                        <span className="text-red-600 dark:text-red-400">
+                    <td className="hidden xl:table-cell px-3 sm:px-4 py-3">
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500" />
+                        <span className="text-xs sm:text-sm text-red-600 dark:text-red-400">
                           {fmtDate(schedule.orderDeliveryDate)}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 sm:px-4 py-3">
                       <span className="inline-flex rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400">
                         Expired
                       </span>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
 import {
   LayoutDashboard,
   Package,
@@ -75,6 +76,7 @@ const allNavItems = [
 
 export function Sidebar() {
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -91,8 +93,8 @@ export function Sidebar() {
     userRole && item.roles.includes(userRole)
   );
 
-  return (
-    <aside className="hidden w-64 flex-col gap-6 rounded-3xl border border-slate-200/70 bg-white/70 p-6 shadow-panel backdrop-blur lg:flex dark:border-slate-700 dark:bg-slate-900/70">
+  const NavContent = () => (
+    <>
       <div className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
           Smart Product
@@ -104,6 +106,7 @@ export function Sidebar() {
           <Link
             key={item.label}
             href={item.href}
+            onClick={() => setMobileDrawerOpen(false)}
             className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-900/5 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
           >
             <item.icon className="h-4 w-4" />
@@ -111,6 +114,68 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="hidden w-64 flex-col gap-6 rounded-3xl border border-slate-200/70 bg-white/70 p-6 shadow-panel backdrop-blur lg:flex dark:border-slate-700 dark:bg-slate-900/70">
+        <NavContent />
+      </aside>
+
+      {/* Mobile Hamburger Button */}
+      <button
+        onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
+        className="lg:hidden fixed top-4 right-4 z-40 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
+      >
+        {mobileDrawerOpen ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <Menu className="h-6 w-6" />
+        )}
+      </button>
+
+      {/* Mobile Drawer */}
+      {mobileDrawerOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="lg:hidden fixed inset-0 bg-black/50 z-30"
+            onClick={() => setMobileDrawerOpen(false)}
+          />
+          {/* Drawer */}
+          <aside className="lg:hidden fixed left-0 top-0 h-full w-64 bg-white dark:bg-slate-900 shadow-lg rounded-r-3xl border-r border-slate-200 dark:border-slate-700 overflow-y-auto z-40 p-6 flex flex-col gap-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                  Smart Product
+                </p>
+                <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Inventory</h1>
+              </div>
+              <button
+                onClick={() => setMobileDrawerOpen(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <nav className="space-y-3">
+              {navItems.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setMobileDrawerOpen(false)}
+                  className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-900/5 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </nav>
+          </aside>
+        </>
+      )}
+    </>
   );
 }

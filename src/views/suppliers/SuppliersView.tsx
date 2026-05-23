@@ -74,24 +74,24 @@ export function SuppliersView({ initialSuppliers }: { initialSuppliers: Supplier
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-                <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Name</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Code</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Contact</th>
-                <th className="px-4 py-3 text-left font-semibold text-slate-700 dark:text-slate-300">Products</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Name</th>
+                <th className="hidden sm:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Code</th>
+                <th className="hidden md:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Contact</th>
+                <th className="hidden lg:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Products</th>
               </tr>
             </thead>
             <tbody>
               {suppliers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">No suppliers found</td>
+                  <td colSpan={4} className="px-3 sm:px-4 py-8 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">No suppliers found</td>
                 </tr>
               ) : (
                 suppliers.map((supplier) => (
                   <tr key={supplier.id} className="border-b border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
-                    <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">{supplier.name}</td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{supplier.code}</td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{supplier.contactEmail || supplier.contactPhone || "-"}</td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{supplier._count.products}</td>
+                    <td className="px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm text-slate-900 dark:text-slate-100">{supplier.name}</td>
+                    <td className="hidden sm:table-cell px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{supplier.code}</td>
+                    <td className="hidden md:table-cell px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{supplier.contactEmail || supplier.contactPhone || "-"}</td>
+                    <td className="hidden lg:table-cell px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{supplier._count.products}</td>
                   </tr>
                 ))
               )}

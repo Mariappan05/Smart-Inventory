@@ -762,20 +762,20 @@ export function TentativeScheduleView({ onScheduleCreated }: { onScheduleCreated
           </h2>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
+          <table className="w-full text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-700/50">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Customer Name
+                <th className="px-3 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Customer
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
                   Components
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <th className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
                   Tools
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <th className="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
                   Created Date
                 </th>
               </tr>
@@ -783,23 +783,23 @@ export function TentativeScheduleView({ onScheduleCreated }: { onScheduleCreated
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {schedules.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={4} className="px-3 sm:px-6 py-6 sm:py-8 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                     No tentative schedules created yet
                   </td>
                 </tr>
               ) : (
                 schedules.map((schedule) => (
                   <tr key={schedule.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
-                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100">
                       {schedule.customerName}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                    <td className="hidden sm:table-cell px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                       {schedule.items.length}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                    <td className="hidden md:table-cell px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                       {schedule.items.reduce((sum, item) => sum + item.tools.length, 0)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                    <td className="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                       {new Date(schedule.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
