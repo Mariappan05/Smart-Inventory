@@ -77,7 +77,7 @@ export class AuthService {
         role: user.role, 
         name: user.name, 
         email: user.email, 
-        plantId: (user as any).plantId || (user as any).storeId || null
+        storeId: user.storeId
       }, secret, { expiresIn: "8h" });
 
       try {
