@@ -6,7 +6,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as { identifier?: string; password?: string };
 
+    console.log("[Login] Received login request for:", body.identifier);
+
     if (!body.identifier || !body.password) {
+      console.log("[Login] Missing credentials");
       return NextResponse.json({ 
         success: false,
         message: "Username/Email and password are required" 
@@ -22,12 +25,17 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
+    console.log("[Login] JWT_SECRET is configured");
+
     const controller = new AuthController();
     try {
+      console.log("[Login] Attempting authentication...");
       const session = await controller.login({ 
         identifier: body.identifier, 
         password: body.password 
       });
+      
+      console.log("[Login] Authentication successful for user:", session.userId);
       
       const response = NextResponse.json({ 
         success: true, 
@@ -45,10 +53,12 @@ export async function POST(request: NextRequest) {
         maxAge: 60 * 60 * 8, // 8 hours
       });
       
+      console.log("[Login] Cookie set, returning response");
       return response;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Invalid credentials";
       console.error("[Login] Authentication failed:", errorMessage);
+      console.error("[Login] Full error:", error);
       
       // Check for specific error types
       if (errorMessage.includes("P1001") || errorMessage.includes("Can't reach database")) {
@@ -63,6 +73,13 @@ export async function POST(request: NextRequest) {
           success: false, 
           message: "Invalid username or password" 
         }, { status: 401 });
+      }
+      
+      if (errorMessage.includes("JWT_SECRET")) {
+        return NextResponse.json({ 
+          success: false, 
+          message: "Server configuration error" 
+        }, { status: 500 });
       }
       
       return NextResponse.json({ 

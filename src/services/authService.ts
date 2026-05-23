@@ -72,7 +72,13 @@ export class AuthService {
         throw new Error("JWT_SECRET is not configured");
       }
 
-      const token = jwt.sign({ sub: user.id, role: user.role, name: user.name, email: user.email, storeId: user.storeId }, secret, { expiresIn: "8h" });
+      const token = jwt.sign({ 
+        sub: user.id, 
+        role: user.role, 
+        name: user.name, 
+        email: user.email, 
+        plantId: user.plantId 
+      }, secret, { expiresIn: "8h" });
 
       try {
         await this.userRepository.update(user.id, { lastLoginAt: new Date() });
