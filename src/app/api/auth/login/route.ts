@@ -60,31 +60,40 @@ export async function POST(request: NextRequest) {
       console.error("[Login] Authentication failed:", errorMessage);
       console.error("[Login] Full error:", error);
       
+      // Return more detailed error in development
+      const detailedMessage = process.env.NODE_ENV === "production" 
+        ? "Invalid username or password"
+        : errorMessage;
+      
       // Check for specific error types
       if (errorMessage.includes("P1001") || errorMessage.includes("Can't reach database")) {
         return NextResponse.json({ 
           success: false, 
-          message: "Database connection failed. Please check your connection." 
+          message: "Database connection failed. Please check your connection.",
+          details: process.env.NODE_ENV !== "production" ? errorMessage : undefined
         }, { status: 503 });
       }
       
       if (errorMessage.includes("P2025") || errorMessage.includes("not found")) {
         return NextResponse.json({ 
           success: false, 
-          message: "Invalid username or password" 
+          message: "Invalid username or password",
+          details: process.env.NODE_ENV !== "production" ? "User not found" : undefined
         }, { status: 401 });
       }
       
       if (errorMessage.includes("JWT_SECRET")) {
         return NextResponse.json({ 
           success: false, 
-          message: "Server configuration error" 
+          message: "Server configuration error",
+          details: process.env.NODE_ENV !== "production" ? errorMessage : undefined
         }, { status: 500 });
       }
       
       return NextResponse.json({ 
         success: false, 
-        message: "Invalid username or password" 
+        message: detailedMessage,
+        details: process.env.NODE_ENV !== "production" ? errorMessage : undefined
       }, { status: 401 });
     }
   } catch (error) {
