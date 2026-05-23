@@ -1,0 +1,1 @@
+ALTER TABLE "Item" DROP CONSTRAINT IF EXISTS "Item_itemCode_key";

@@ -1,0 +1,475 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id             String                @id @default(cuid())
+  employeeNo     String                @unique @db.VarChar(30)
+  email          String                @unique @db.VarChar(255)
+  name           String                @db.VarChar(120)
+  role           UserRole              @default(EMPLOYEE)
+  hashedPassword String                @db.VarChar(255)
+  isActive       Boolean               @default(true)
+  storeId        String?
+  store          Store?                @relation("UserStore", fields: [storeId], references: [id], onDelete: SetNull)
+  lastLoginAt    DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  images         UserImage[]
+  qrScans        QrScanLog[]
+  outLogs        ProductOutLog[]       @relation("OutBy")
+  inLogs         ProductInLog[]        @relation("InBy")
+  alerts         SecurityAlert[]       @relation("AlertBy")
+  createdSchedules Schedule[]          @relation("ScheduleCreatedBy")
+  completedSchedules Schedule[]        @relation("ScheduleCompletedBy")
+  deliveredSchedules Schedule[]        @relation("ScheduleDeliveredBy")
+  createdProducts Product[]            @relation("ProductCreatedBy")
+  createdItems   Item[]                @relation("ItemCreatedBy")
+  createdSuppliers Supplier[]          @relation("SupplierCreatedBy")
+  createdTools   Tool[]                @relation("ToolCreatedBy")
+  createdTypes   Type[]                @relation("TypeCreatedBy")
+  createdStores  Store[]               @relation("StoreCreatedBy")
+  createdMonthlySchedules TentativeMonthlySchedule[] @relation("MonthlyScheduleCreatedBy")
+  notifications  Notification[]
+
+  @@index([role, isActive])
+  @@index([storeId])
+}
+
+model UserImage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  url       String   @db.VarChar(500)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, isPrimary])
+}
+
+model Type {
+  id          String    @id @default(cuid())
+  name        String    @db.VarChar(120)
+  supplierId  String?
+  supplier    Supplier? @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  storeId     String?
+  store       Store?    @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  createdById String?
+  createdBy   User?     @relation("TypeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+  items       Item[]
+  schedules   Schedule[]
+
+  @@unique([supplierId, name])
+  @@index([storeId])
+  @@index([createdById])
+}
+
+model Item {
+  id                String     @id @default(cuid())
+  name              String     @db.VarChar(160)
+  variant           String?    @db.VarChar(100)
+  itemCode          String?    @db.VarChar(100)
+  description       String     @db.Text
+  lifeDuration      String     @db.VarChar(100)
+  unitPrice         Float?     @default(0)
+  imagesJson        String?    @db.Text
+  supplierId        String?
+  supplier          Supplier?  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  typeId            String?
+  type              Type?      @relation(fields: [typeId], references: [id], onDelete: SetNull)
+  stockQuantity     Int        @default(0)
+  minimumQuantity   Int        @default(10)
+  reorderQuantity   Int        @default(50)
+  storeId           String?
+  store             Store?     @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  createdById       String?
+  createdBy         User?      @relation("ItemCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  products          Product[]
+  schedules         Schedule[]
+  monthlyScheduleItems TentativeMonthlyScheduleItem[]
+  tools             Tool[]
+
+  @@unique([itemCode, storeId])
+  @@index([typeId])
+  @@index([storeId])
+  @@index([createdById])
+}
+
+model Supplier {
+  id           String     @id @default(cuid())
+  name         String     @unique @db.VarChar(160)
+  code         String     @unique @db.VarChar(40)
+  contactEmail String?    @db.VarChar(255)
+  contactPhone String?    @db.VarChar(40)
+  address      String?    @db.Text
+  storeId      String?
+  store        Store?     @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  createdById  String?
+  createdBy    User?      @relation("SupplierCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  products     Product[]
+  types        Type[]
+  items        Item[]
+  schedules    Schedule[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([code])
+  @@index([storeId])
+  @@index([createdById])
+}
+
+model Store {
+  id            String               @id @default(cuid())
+  name          String               @unique @db.VarChar(120)
+  code          String               @unique @db.VarChar(10)
+  createdById   String?
+  createdBy     User?                @relation("StoreCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  users         User[]               @relation("UserStore")
+  products      Product[]
+  items         Item[]
+  suppliers     Supplier[]
+  tools         Tool[]
+  types         Type[]
+  outLogs       ProductOutLog[]      @relation("OutFrom")
+  inLogs        ProductInLog[]       @relation("InTo")
+  schedules     Schedule[]
+  completedSchedules Schedule[]       @relation("ScheduleCompletedByStore")
+  monthlySchedules TentativeMonthlySchedule[] @relation("MonthlyScheduleStore")
+  alerts        SecurityAlert[]      @relation("AlertStore")
+  scanLogs      QrScanLog[]          @relation("ScanStore")
+
+  @@index([createdById])
+}
+
+model Product {
+  id            String                 @id @default(cuid())
+  serial        String                 @unique @db.VarChar(80)
+  supplierId    String
+  typeId        String
+  itemId        String
+  storeId       String
+  price         Float?
+  status        ProductStatus          @default(AVAILABLE)
+  createdById   String?
+  createdBy     User?                  @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  supplier      Supplier               @relation(fields: [supplierId], references: [id])
+  type          Type                   @relation(fields: [typeId], references: [id])
+  item          Item                   @relation(fields: [itemId], references: [id])
+  store         Store                  @relation(fields: [storeId], references: [id])
+  images        ProductImage[]
+  outLogs       ProductOutLog[]
+  inLogs        ProductInLog[]
+  scans         QrScanLog[]
+  alerts        SecurityAlert[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@index([status])
+  @@index([typeId])
+  @@index([itemId])
+  @@index([supplierId])
+  @@index([storeId])
+  @@index([createdById])
+}
+
+model Tool {
+  id              String   @id @default(cuid())
+  itemId          String
+  item            Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  toolName        String   @db.VarChar(160)
+  operations      Json     @default("[]")
+  supplierName    String   @db.VarChar(160)
+  supplierCode    String   @db.VarChar(100)
+  rate            Float
+  storeId         String?
+  store           Store?   @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  createdById     String?
+  createdBy       User?    @relation("ToolCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  monthlyScheduleItemTools TentativeMonthlyScheduleItemTool[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([itemId, toolName, supplierCode])
+  @@index([itemId])
+  @@index([storeId])
+  @@index([createdById])
+}
+
+model TentativeMonthlySchedule {
+  id              String                        @id @default(cuid())
+  customerName    String                        @db.VarChar(160)
+  storeId         String?
+  store           Store?                        @relation("MonthlyScheduleStore", fields: [storeId], references: [id], onDelete: SetNull)
+  createdById     String?
+  createdBy       User?                         @relation("MonthlyScheduleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  items           TentativeMonthlyScheduleItem[]
+  createdAt       DateTime                      @default(now())
+  updatedAt       DateTime                      @updatedAt
+
+  @@index([customerName])
+  @@index([storeId])
+  @@index([createdById])
+}
+
+model TentativeMonthlyScheduleItem {
+  id                String                              @id @default(cuid())
+  scheduleId        String
+  schedule          TentativeMonthlySchedule            @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  componentId       String
+  component         Item                                @relation(fields: [componentId], references: [id], onDelete: Cascade)
+  quantity          Int
+  tools             TentativeMonthlyScheduleItemTool[]
+  createdAt         DateTime                            @default(now())
+  updatedAt         DateTime                            @updatedAt
+
+  @@index([scheduleId])
+  @@index([componentId])
+}
+
+model TentativeMonthlyScheduleItemTool {
+  id        String                       @id @default(cuid())
+  itemId    String
+  item      TentativeMonthlyScheduleItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  toolId    String
+  tool      Tool                         @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  quantity  Int
+  createdAt DateTime                     @default(now())
+  updatedAt DateTime                     @updatedAt
+
+  @@index([itemId])
+  @@index([toolId])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String   @db.VarChar(500)
+  caption   String?  @db.VarChar(200)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+model ProductOutLog {
+  id              String   @id @default(cuid())
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  fromStoreId     String
+  fromStore       Store    @relation("OutFrom", fields: [fromStoreId], references: [id])
+  outById         String?
+  outBy           User?    @relation("OutBy", fields: [outById], references: [id], onDelete: SetNull)
+  issuedTo        String   @db.VarChar(160)
+  issuedToId      String?
+  reason          String?  @db.Text
+  expectedReturnAt DateTime?
+  outAt           DateTime @default(now())
+
+  @@index([productId, outAt])
+  @@index([fromStoreId])
+  @@index([outById])
+}
+
+model ProductInLog {
+  id            String   @id @default(cuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  toStoreId     String
+  toStore       Store    @relation("InTo", fields: [toStoreId], references: [id])
+  inById        String?
+  inBy          User?    @relation("InBy", fields: [inById], references: [id], onDelete: SetNull)
+  conditionNote String?  @db.Text
+  inAt          DateTime @default(now())
+
+  @@index([productId, inAt])
+  @@index([toStoreId])
+  @@index([inById])
+}
+
+model QrScanLog {
+  id          String      @id @default(cuid())
+  productId   String
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  storeId     String?
+  store       Store?      @relation("ScanStore", fields: [storeId], references: [id], onDelete: SetNull)
+  scannedById String?
+  scannedBy   User?       @relation(fields: [scannedById], references: [id], onDelete: SetNull)
+  source      ScanSource  @default(MOBILE)
+  payload     String?     @db.Text
+  scannedAt   DateTime    @default(now())
+
+  @@index([productId, scannedAt])
+  @@index([scannedById])
+  @@index([storeId])
+}
+
+model SecurityAlert {
+  id           String        @id @default(cuid())
+  productId    String
+  product      Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  storeId      String?
+  store        Store?        @relation("AlertStore", fields: [storeId], references: [id], onDelete: SetNull)
+  reportedById String?
+  reportedBy   User?          @relation("AlertBy", fields: [reportedById], references: [id], onDelete: SetNull)
+  severity     AlertSeverity @default(MEDIUM)
+  status       AlertStatus   @default(OPEN)
+  title        String        @db.VarChar(180)
+  description  String?       @db.Text
+  createdAt    DateTime      @default(now())
+  resolvedAt   DateTime?
+
+  @@index([status, severity])
+  @@index([reportedById])
+  @@index([productId, createdAt])
+  @@index([storeId])
+}
+
+model Schedule {
+  id                String         @id @default(cuid())
+  scheduleDate      DateTime
+  supplierId        String
+  supplier          Supplier       @relation(fields: [supplierId], references: [id])
+  typeId            String
+  type              Type           @relation(fields: [typeId], references: [id])
+  itemId            String
+  item              Item           @relation(fields: [itemId], references: [id])
+  storeId           String
+  store             Store          @relation(fields: [storeId], references: [id])
+  quantity          Int
+  unitPrice         Float
+  totalPrice        Float
+  gstAmount         Float
+  totalWithGst      Float
+  orderDeliveryDate DateTime
+  deliveryDate      DateTime?
+  supplierBillNumber String?       @db.VarChar(100)
+  status            ScheduleStatus @default(TENTATIVE)
+  createdById       String?
+  createdBy         User?          @relation("ScheduleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  completedAt       DateTime?
+  completedById     String?
+  completedBy       User?          @relation("ScheduleCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  completedByStoreId String?
+  completedByStore  Store?         @relation("ScheduleCompletedByStore", fields: [completedByStoreId], references: [id], onDelete: SetNull)
+  deliveredAt       DateTime?
+  deliveredById     String?
+  deliveredBy       User?          @relation("ScheduleDeliveredBy", fields: [deliveredById], references: [id], onDelete: SetNull)
+  notes             String?        @db.Text
+  billUrl           String?        @db.VarChar(500)
+  qrCode            String?        @db.Text
+  reminderSent      Boolean        @default(false)
+  
+  // Monthly Schedule fields
+  isMonthlySchedule Boolean        @default(false)
+  customerName      String?        @db.VarChar(160)
+  componentName     String?        @db.VarChar(160)
+  componentCode     String?        @db.VarChar(100)
+  scheduleType      ScheduleType   @default(TENTATIVE_MONTHLY)
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([status])
+  @@index([orderDeliveryDate])
+  @@index([supplierId])
+  @@index([typeId])
+  @@index([storeId])
+  @@index([scheduleDate])
+  @@index([createdById])
+  @@index([completedById])
+  @@index([completedByStoreId])
+  @@index([deliveredById])
+  @@index([deliveredAt])
+  @@index([isMonthlySchedule])
+  @@index([scheduleType])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String   @db.VarChar(255)
+  message   String   @db.Text
+  type      NotificationType
+  productId String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+enum UserRole {
+  ADMIN
+  ADMIN_MANAGER
+  STORE_MANAGER
+  EMPLOYEE
+  SUB_STORE_LOGIN
+  INWARD_PERSON
+  OUTWARD_PERSON
+}
+
+enum ProductStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+  OUT_OF_STOCK
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum AlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum ScanSource {
+  MOBILE
+  KIOSK
+  API
+}
+
+enum ScheduleStatus {
+  TENTATIVE
+  FINAL
+  BILL_GENERATED
+  COMPLETED
+  DELIVERED
+  CLOSED
+  EXPIRED
+}
+
+enum ScheduleType {
+  TENTATIVE_MONTHLY
+  FINAL_MONTHLY
+}
+
+enum NotificationType {
+  order_created
+  order_allocated
+  order_completed
+  order_delivered
+  order_closed
+}

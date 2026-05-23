@@ -1,0 +1,302 @@
+STORE-BASED ACCESS CONTROL - DEVELOPER GUIDE
+============================================
+
+QUICK REFERENCE FOR IMPLEMENTING STORE FILTERING
+-------------------------------------------------
+
+1. IMPORT REQUIRED UTILITIES
+```typescript
+import { requireAuth, getUserSession } from "@/lib/auth/permissions";
+import { getStoreWhereClause, getStoreIdForCreate } from "@/lib/storeFilter";
+```
+
+2. API ROUTE PATTERN (GET/LIST)
+```typescript
+export async function GET(request: NextRequest) {
+  // Authenticate user
+  const authResult = await requireAuth(request);
+  if (authResult instanceof NextResponse) return authResult;
+  const session = authResult;
+
+  // Apply store filtering
+  const where = {
+    ...getStoreWhereClause(session),
+    // Add other filters here
+  };
+
+  // Query with filter
+  const data = await prisma.yourModel.findMany({ where });
+  
+  return NextResponse.json({ success: true, data });
+}
+```
+
+3. API ROUTE PATTERN (CREATE)
+```typescript
+export async function POST(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (authResult instanceof NextResponse) return authResult;
+  const session = authResult;
+
+  const body = await request.json();
+  
+  // Determine store ID for creation
+  const plantId = getStoreIdForCreate(session, body.plantId);
+  
+  // Create with store assignment
+  const data = await prisma.yourModel.create({
+    data: {
+      ...body,
+      plantId, // Assign to store
+    },
+  });
+  
+  return NextResponse.json({ success: true, data });
+}
+```
+
+4. API ROUTE PATTERN (UPDATE)
+```typescript
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  const authResult = await requireAuth(request);
+  if (authResult instanceof NextResponse) return authResult;
+  const session = authResult;
+
+  // Verify user can access this record
+  const existing = await prisma.yourModel.findUnique({
+    where: { id: params.id },
+  });
+  
+  if (!existing || !canUserAccessStore(session, existing.plantId)) {
+    return NextResponse.json(
+      { success: false, message: "Access denied" },
+      { status: 403 }
+    );
+  }
+
+  // Update record
+  const data = await prisma.yourModel.update({
+    where: { id: params.id },
+    data: body,
+  });
+  
+  return NextResponse.json({ success: true, data });
+}
+```
+
+5. NESTED RELATIONS FILTERING
+```typescript
+// When filtering by related model's store
+const where = {
+  product: {
+    ...getStoreWhereClause(session),
+  },
+};
+
+// Example: Filter alerts by product's store
+const alerts = await prisma.securityAlert.findMany({
+  where: {
+    product: {
+      plantId: session.plantId || undefined,
+    },
+  },
+});
+```
+
+6. MOVEMENT LOGS (FROM/TO STORES)
+```typescript
+// Filter by either source or destination store
+const movementFilter = session.plantId ? {
+  OR: [
+    { fromPlantId: session.plantId },
+    { toPlantId: session.plantId }
+  ]
+} : {};
+
+const movements = await prisma.productMovementLog.findMany({
+  where: movementFilter,
+});
+```
+
+7. SERVER COMPONENT PATTERN
+```typescript
+// In page.tsx or layout.tsx
+import { cookies } from "next/headers";
+import { verifyAuthToken } from "@/lib/auth/jwt";
+import { authCookieName } from "@/lib/auth/session";
+
+async function getCurrentUser() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(authCookieName)?.value;
+  if (!token) return null;
+
+  try {
+    const payload = verifyAuthToken(token);
+    return {
+      id: payload.sub,
+      role: payload.role,
+      plantId: payload.plantId || null
+    };
+  } catch {
+    return null;
+  }
+}
+
+export default async function YourPage() {
+  const user = await getCurrentUser();
+  const plantId = user?.plantId || undefined;
+  
+  // Fetch data with store filter
+  const data = await fetchData(plantId);
+  
+  return <YourView data={data} />;
+}
+```
+
+8. CHECKING ACCESS PERMISSIONS
+```typescript
+import { canAccessAllStores } from "@/lib/auth/permissions";
+
+// Check if user can access all stores
+if (canAccessAllStores(session.role)) {
+  // Admin or Admin Manager - no filtering needed
+} else {
+  // Apply store filtering
+}
+```
+
+9. COMMON PATTERNS
+
+Pattern A: Simple Store Filter
+```typescript
+const where = session.plantId ? { plantId: session.plantId } : {};
+```
+
+Pattern B: Using Helper Function
+```typescript
+const where = getStoreWhereClause(session);
+```
+
+Pattern C: Combined Filters
+```typescript
+const where = {
+  ...getStoreWhereClause(session),
+  status: "ACTIVE",
+  createdAt: { gte: startDate },
+};
+```
+
+10. ROLE-BASED ACCESS MATRIX
+
+| Role              | Can Access All Stores | Requires Store Assignment |
+|-------------------|----------------------|---------------------------|
+| ADMIN             | ✓ Yes                | ✗ No                      |
+| ADMIN_MANAGER     | ✓ Yes                | ✗ No                      |
+| STORE_MANAGER     | ✗ No                 | ✓ Yes                     |
+| EMPLOYEE          | ✗ No                 | ✓ Yes                     |
+| SUB_STORE_LOGIN   | ✗ No                 | ✓ Yes                     |
+| INWARD_PERSON     | ✗ No                 | ✓ Yes                     |
+| OUTWARD_PERSON    | ✗ No                 | ✓ Yes                     |
+
+11. TESTING YOUR IMPLEMENTATION
+
+Test Case 1: List Operation
+- Login as store user
+- Call GET endpoint
+- Verify only assigned store data returned
+
+Test Case 2: Create Operation
+- Login as store user
+- Create new record
+- Verify record assigned to user's store
+
+Test Case 3: Access Control
+- Login as Store A user
+- Try to access Store B record
+- Verify access denied
+
+Test Case 4: Admin Access
+- Login as Admin
+- Verify can see all stores data
+- Verify can create for any store
+
+12. COMMON MISTAKES TO AVOID
+
+❌ DON'T: Filter on client side
+```typescript
+// BAD - Client can bypass this
+const filtered = allData.filter(item => item.plantId === userPlantId);
+```
+
+✓ DO: Filter on server side
+```typescript
+// GOOD - Server enforces filtering
+const data = await prisma.model.findMany({
+  where: { plantId: session.plantId }
+});
+```
+
+❌ DON'T: Trust client-provided store ID
+```typescript
+// BAD - Client can send any plantId
+const data = await prisma.model.findMany({
+  where: { plantId: body.plantId }
+});
+```
+
+✓ DO: Use session store ID
+```typescript
+// GOOD - Use authenticated user's store
+const data = await prisma.model.findMany({
+  where: getStoreWhereClause(session)
+});
+```
+
+13. DEBUGGING TIPS
+
+Check JWT Token:
+```typescript
+console.log("Session:", session);
+console.log("PlantId:", session.plantId);
+console.log("Role:", session.role);
+```
+
+Check Where Clause:
+```typescript
+const where = getStoreWhereClause(session);
+console.log("Where clause:", where);
+```
+
+Check Query Results:
+```typescript
+const data = await prisma.model.findMany({ where });
+console.log("Records found:", data.length);
+console.log("Store IDs:", data.map(d => d.plantId));
+```
+
+14. PERFORMANCE CONSIDERATIONS
+
+- plantId is indexed in database
+- Store filtering adds minimal overhead
+- Use select to limit returned fields
+- Consider pagination for large datasets
+
+```typescript
+const data = await prisma.model.findMany({
+  where: getStoreWhereClause(session),
+  select: { id: true, name: true, plantId: true },
+  take: 50,
+  skip: (page - 1) * 50,
+});
+```
+
+15. MIGRATION CHECKLIST
+
+When adding store filtering to existing endpoint:
+□ Add authentication check
+□ Get user session
+□ Apply getStoreWhereClause()
+□ Test with different roles
+□ Verify Admin can see all
+□ Verify store users see only their data
+□ Update API documentation

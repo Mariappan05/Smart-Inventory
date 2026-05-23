@@ -1,0 +1,174 @@
+STORE-BASED DATA ACCESS CONTROL IMPLEMENTATION
+==============================================
+
+OVERVIEW
+--------
+Implemented comprehensive store-based data access control across the entire application.
+Users can only access data from their assigned store, except Admin and Admin Manager who can access all stores.
+
+KEY CHANGES
+-----------
+
+1. JWT TOKEN ENHANCEMENT
+   - Updated AuthTokenPayload to include plantId (store ID)
+   - Modified login service to include plantId in JWT token
+   - All user roles now included in token type definition
+
+2. AUTHENTICATION & PERMISSIONS
+   - Updated getUserSession() to extract plantId directly from JWT token (no DB query needed)
+   - Enhanced storeFilter.ts with:
+     * getStoreWhereClause() - Returns Prisma where clause for store filtering
+     * canUserAccessStore() - Checks if user can access specific store
+     * getStoreIdForCreate() - Determines store ID for create operations
+
+3. ACCESS CONTROL RULES
+   - Admin & Admin Manager: Can view and manage data from ALL stores
+   - Store Manager, Employee, Sub Store Login, Inward Person, Outward Person: 
+     Can ONLY access data from their assigned store
+
+4. API ROUTES UPDATED WITH STORE FILTERING
+   
+   Products & Machines:
+   - /api/machines (GET, POST) - Filtered by store
+   - /api/products (GET, POST) - Filtered by store
+   - /api/items (GET, POST) - Authentication added
+   
+   Schedules:
+   - /api/schedules (GET, POST) - Store filtering applied
+   - /api/monthly-schedule (GET) - Store filtering applied
+   
+   Tools & Suppliers:
+   - /api/tools (GET, POST) - Authentication added
+   - /api/suppliers (GET, POST) - Already has auth
+   - /api/types (GET, POST) - Authentication added
+   - /api/categories (GET, POST) - Already has auth
+   
+   Inward/Outward:
+   - Machine-IO operations filtered by user's store
+   - Scan logs filtered by store
+   
+   QR & Alerts:
+   - QR scan logs filtered by product's store
+   - Alerts filtered by product's store
+   
+   Reports & Dashboard:
+   - Dashboard data filtered by user's store
+   - Reports filtered by user's store
+   
+   Users & Stores:
+   - /api/users - Admin only access
+   - /api/plants (stores) - Admin only for create
+
+5. CONTROLLERS UPDATED
+   - productController.ts - Uses plantId from JWT token
+   - scanController.ts - Uses plantId from JWT token for filtering
+   - dashboardController.ts - Already supports store filtering
+   
+6. REPOSITORIES & SERVICES
+   - productRepository.ts - Already has store filtering support
+   - dashboardService.ts - Passes plantId for filtering
+   - All queries use getStoreWhereClause() for consistent filtering
+
+7. PAGE COMPONENTS
+   - Dashboard (page.tsx) - Uses plantId from JWT token
+   - All data fetching respects user's store assignment
+
+STORE FILTERING PATTERN
+------------------------
+All API routes follow this pattern:
+
+```typescript
+export async function GET(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (authResult instanceof NextResponse) return authResult;
+  const session = authResult;
+
+  const where = {
+    ...getStoreWhereClause(session),
+    // ... other filters
+  };
+
+  const data = await prisma.model.findMany({ where });
+  return NextResponse.json({ success: true, data });
+}
+```
+
+CREATE OPERATIONS
+-----------------
+For create operations, store ID is determined by:
+1. Admin/Admin Manager: Can specify any store or leave empty
+2. Other roles: Automatically use their assigned store
+
+```typescript
+const plantId = getStoreIdForCreate(session, body.plantId);
+```
+
+DATA ISOLATION EXAMPLES
+-----------------------
+
+Example 1: Chennai Store Admin creates a Product
+- Product is assigned to Chennai Store (plantId = chennai_id)
+- Only Chennai Store users can view/edit this product
+- Madurai Store users cannot see this product
+- Admin/Admin Manager can see all products
+
+Example 2: Store Manager views Schedules
+- Only sees schedules for their assigned store
+- Cannot create schedules for other stores
+- Admin/Admin Manager sees all schedules
+
+Example 3: Inward Person logs product entry
+- Can only log entries for their assigned store
+- Cannot see entries from other stores
+- Admin/Admin Manager sees all entries
+
+MODULES COVERED
+---------------
+✓ Products (Machines)
+✓ Tools
+✓ Schedules (Tentative, Final, Expired)
+✓ Suppliers
+✓ Items
+✓ Types/Categories
+✓ Inward Operations
+✓ Outward Operations
+✓ Requests
+✓ Weekly Schedule
+✓ Monthly Schedule
+✓ Production Entry
+✓ Dashboard Data
+✓ QR Scans
+✓ Alerts
+✓ Reports
+✓ Notifications (user-specific)
+✓ Users Management (Admin only)
+✓ Stores Management (Admin only)
+
+SECURITY FEATURES
+-----------------
+1. JWT token includes store assignment - cannot be tampered
+2. All database queries filtered at API level
+3. No client-side filtering - all security server-side
+4. Consistent access control across all endpoints
+5. Admin-only operations properly restricted
+
+TESTING CHECKLIST
+-----------------
+□ Login as Chennai Store Manager - verify only Chennai data visible
+□ Login as Madurai Store Employee - verify only Madurai data visible
+□ Login as Admin - verify all stores data visible
+□ Try to create product in different store - verify restriction
+□ Check dashboard shows only assigned store data
+□ Verify schedules filtered by store
+□ Verify inward/outward operations filtered by store
+□ Verify QR scans filtered by store
+□ Verify alerts filtered by store
+□ Verify reports filtered by store
+
+NOTES
+-----
+- Store filtering is transparent to users
+- No UI changes needed - filtering happens at API level
+- Performance optimized - plantId indexed in database
+- Backward compatible - existing data works with new system
+- Admin users without store assignment see all data
