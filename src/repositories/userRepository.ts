@@ -46,7 +46,7 @@ export class UserRepository extends BaseRepository implements IUserRepository {
             where: { isPrimary: true },
             take: 1
           },
-          store: {
+          plant: {
             select: {
               id: true,
               name: true
