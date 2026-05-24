@@ -16,10 +16,10 @@ export function MonthlyScheduleView() {
     <div className="space-y-6">
       <div className="rounded-lg border border-slate-200 bg-white/70 p-6 shadow-panel dark:border-slate-700 dark:bg-slate-900/70">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-          Monthly Schedule Management
+          Monthly Plan Management
         </h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          Create and manage tentative and final schedules for the month
+          Create and manage tentative and final plans for the month
         </p>
       </div>
 
@@ -33,7 +33,7 @@ export function MonthlyScheduleView() {
               : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
           }`}
         >
-          Tentative Schedule
+          Tentative Plan
         </button>
         <button
           onClick={() => setActiveTab("final")}
@@ -43,7 +43,7 @@ export function MonthlyScheduleView() {
               : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
           }`}
         >
-          Final Schedule
+          Final Plan
         </button>
       </div>
 

@@ -6,7 +6,7 @@ import { authCookieName } from "@/lib/auth/session";
 
 export const metadata = {
   title: "Monthly Plan - Smart Inventory",
-  description: "Manage tentative and final monthly schedules",
+  description: "Manage tentative and final monthly plans",
 };
 
 export default async function MonthlyPlanPage() {

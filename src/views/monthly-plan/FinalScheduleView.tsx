@@ -96,39 +96,39 @@ export function FinalScheduleView({ refreshKey }: FinalScheduleViewProps) {
 
       toast({
         title: "Success",
-        description: "Schedule closed successfully",
+        description: "Plan closed successfully",
       });
 
       fetchSchedules();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to close schedule",
+        description: error.message || "Failed to close plan",
         variant: "destructive",
       });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this schedule?")) return;
+    if (!confirm("Are you sure you want to delete this plan?")) return;
 
     try {
       const response = await fetch(`/api/monthly-schedule/${id}`, {
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("Failed to delete schedule");
+      if (!response.ok) throw new Error("Failed to delete plan");
 
       toast({
         title: "Success",
-        description: "Schedule deleted successfully",
+        description: "Plan deleted successfully",
       });
 
       fetchSchedules();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to delete schedule",
+        description: error.message || "Failed to delete plan",
         variant: "destructive",
       });
     }
@@ -147,8 +147,8 @@ export function FinalScheduleView({ refreshKey }: FinalScheduleViewProps) {
       <div className="rounded-lg border border-slate-200 bg-white/50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
         <p className="text-sm text-slate-600 dark:text-slate-400">
           {schedules.length === 0
-            ? "No tentative schedules available. Create schedules in the Tentative Schedule tab first."
-            : `${schedules.length} schedule(s) ready for final processing`}
+            ? "No tentative plans available. Create plans in the Tentative Plan tab first."
+            : `${schedules.length} plan(s) ready for final processing`}
         </p>
       </div>
 
@@ -181,7 +181,7 @@ export function FinalScheduleView({ refreshKey }: FinalScheduleViewProps) {
             {schedules.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
-                  No schedules available
+                  No plans available
                 </td>
               </tr>
             ) : (
@@ -273,7 +273,7 @@ export function FinalScheduleView({ refreshKey }: FinalScheduleViewProps) {
                           </button>
                           <button
                             onClick={() => handleCloseSchedule(schedule.id)}
-                            title="Close Schedule"
+                            title="Close Plan"
                             className="text-green-600 hover:text-green-700 dark:text-green-400"
                           >
                             <CheckCircle className="h-4 w-4" />

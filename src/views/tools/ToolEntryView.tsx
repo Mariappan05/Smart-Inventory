@@ -10,6 +10,7 @@ type Item = {
   itemCode: string | null;
   variant: string | null;
   description: string;
+  storeId: string | null;
   supplier: { id: string; name: string } | null;
 };
 
@@ -27,10 +28,16 @@ type Tool = {
   supplierCode: string;
   rate: number;
   createdAt: string;
+  storeId: string;
   item?: {
     id: string;
     name: string;
     itemCode: string | null;
+  };
+  store?: {
+    id: string;
+    name: string;
+    code: string;
   };
 };
 
@@ -47,8 +54,31 @@ type Props = {
   items: Item[];
 };
 
+interface Store {
+  id: string;
+  code: string;
+  name: string;
+}
+
+interface PendingTool {
+  tempId: string;
+  storeId: string;
+  storeName: string;
+  itemId: string;
+  itemName: string;
+  toolName: string;
+  operations: Operation[];
+  supplierName: string;
+  supplierCode: string;
+  rate: number;
+}
+
 export function ToolEntryView({ items }: Props) {
-  const [form, setForm] = useState<ToolFormData>({
+  const [stores, setStores] = useState<Store[]>([]);
+  const [componentSearch, setComponentSearch] = useState("");
+  const [form, setForm] = useState<ToolFormData & { storeId: string; storeName: string }>({
+    storeId: "",
+    storeName: "",
     itemId: "",
     toolName: "",
     operations: [{ name: "", lifeSpan: 0 }],
@@ -56,6 +86,10 @@ export function ToolEntryView({ items }: Props) {
     supplierCode: "",
     rate: "",
   });
+
+  const [pendingTools, setPendingTools] = useState<PendingTool[]>([]);
+  const [editingPendingId, setEditingPendingId] = useState<string | null>(null);
+  const [selectedPendingIds, setSelectedPendingIds] = useState<Set<string>>(new Set());
 
   const [tools, setTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +112,21 @@ export function ToolEntryView({ items }: Props) {
   // Fetch tools
   useEffect(() => {
     fetchTools();
+    fetchStores();
   }, []);
+
+  const fetchStores = async () => {
+    try {
+      const res = await fetch("/api/plants");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setStores(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching stores:", error);
+      toast.error("Failed to fetch stores");
+    }
+  };
 
   // Fetch tools for selected item
   useEffect(() => {
@@ -89,6 +137,19 @@ export function ToolEntryView({ items }: Props) {
       setSelectedProductTools([]);
     }
   }, [form.itemId, tools]);
+
+  // Filter items by selected store
+  const filteredItems = form.storeId 
+    ? items.filter(item => item.storeId === form.storeId)
+    : [];
+
+  // Filter items by search (show dropdown only when searching)
+  const searchedItems = componentSearch.trim()
+    ? filteredItems.filter(item => 
+        item.name.toLowerCase().includes(componentSearch.toLowerCase()) ||
+        (item.itemCode && item.itemCode.toLowerCase().includes(componentSearch.toLowerCase()))
+      )
+    : [];
 
   const fetchTools = async () => {
     try {
@@ -338,6 +399,11 @@ export function ToolEntryView({ items }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!form.storeId.trim()) {
+      toast.error("Store is required");
+      return;
+    }
+
     if (!form.itemId.trim()) {
       toast.error("Component is required");
       return;
@@ -369,43 +435,158 @@ export function ToolEntryView({ items }: Props) {
       return;
     }
 
+    const selectedItem = items.find(i => i.id === form.itemId);
+    const newTool: PendingTool = {
+      tempId: `temp-${Date.now()}`,
+      storeId: form.storeId,
+      storeName: form.storeName,
+      itemId: form.itemId,
+      itemName: selectedItem?.name || "Unknown",
+      toolName: form.toolName.trim(),
+      operations: validOperations,
+      supplierName: form.supplierName.trim(),
+      supplierCode: form.supplierCode.trim(),
+      rate: parseFloat(form.rate),
+    };
+
+    if (editingPendingId) {
+      setPendingTools(pendingTools.map(t => 
+        t.tempId === editingPendingId ? { ...newTool, tempId: editingPendingId } : t
+      ));
+      setEditingPendingId(null);
+      toast.success("Tool updated in list");
+    } else {
+      setPendingTools([...pendingTools, newTool]);
+      toast.success("Tool added to list");
+    }
+
+    // Reset form but keep store selection
+    setForm({
+      storeId: form.storeId,
+      storeName: form.storeName,
+      itemId: "",
+      toolName: "",
+      operations: [{ name: "", lifeSpan: 0 }],
+      supplierName: "",
+      supplierCode: "",
+      rate: "",
+    });
+  };
+
+  const handleCreateAllTools = async () => {
+    if (pendingTools.length === 0) {
+      toast.error("Please add at least one tool");
+      return;
+    }
+
     try {
       setSubmitting(true);
-      const res = await fetch("/api/tools", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          itemId: form.itemId.trim(),
-          toolName: form.toolName.trim(),
-          operations: validOperations,
-          supplierName: form.supplierName.trim(),
-          supplierCode: form.supplierCode.trim(),
-          rate: parseFloat(form.rate),
-        }),
-      });
+      let successCount = 0;
+      const failedTools: string[] = [];
 
-      const data = await res.json();
+      for (const tool of pendingTools) {
+        try {
+          const res = await fetch("/api/tools", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              storeId: tool.storeId,
+              itemId: tool.itemId,
+              toolName: tool.toolName,
+              operations: tool.operations,
+              supplierName: tool.supplierName,
+              supplierCode: tool.supplierCode,
+              rate: tool.rate,
+            }),
+          });
 
-      if (data.success) {
-        toast.success("Tool created successfully");
-        setForm({
-          itemId: form.itemId,
-          toolName: "",
-          operations: [{ name: "", lifeSpan: 0 }],
-          supplierName: "",
-          supplierCode: "",
-          rate: "",
-        });
-        fetchTools();
-      } else {
-        toast.error(data.error || "Failed to create tool");
+          const data = await res.json();
+          if (data.success) {
+            successCount++;
+          } else {
+            failedTools.push(`${tool.toolName} (${data.error})`);
+          }
+        } catch (err) {
+          failedTools.push(tool.toolName);
+        }
       }
+
+      await fetchTools();
+
+      if (successCount === pendingTools.length) {
+        toast.success(`✓ Successfully created ${successCount} tool${successCount > 1 ? "s" : ""}!`);
+      } else if (successCount > 0) {
+        toast.success(`Created ${successCount} tool${successCount > 1 ? "s" : ""}. ${failedTools.length} failed.`);
+      } else {
+        toast.error("Failed to create tools. " + failedTools.join(", "));
+      }
+
+      setPendingTools([]);
     } catch (error) {
-      console.error("Error creating tool:", error);
-      toast.error("Failed to create tool");
+      console.error("Error creating tools:", error);
+      toast.error("Failed to create tools");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEditPendingTool = (tool: PendingTool) => {
+    setForm({
+      storeId: tool.storeId,
+      storeName: tool.storeName,
+      itemId: tool.itemId,
+      toolName: tool.toolName,
+      operations: [...tool.operations],
+      supplierName: tool.supplierName,
+      supplierCode: tool.supplierCode,
+      rate: tool.rate.toString(),
+    });
+    setEditingPendingId(tool.tempId);
+  };
+
+  const handleDeletePendingTool = (tempId: string) => {
+    setPendingTools(pendingTools.filter(t => t.tempId !== tempId));
+    if (editingPendingId === tempId) {
+      setEditingPendingId(null);
+    }
+    toast.success("Tool removed from list");
+  };
+
+  const handleBulkDeletePending = () => {
+    setPendingTools(pendingTools.filter(t => !selectedPendingIds.has(t.tempId)));
+    setSelectedPendingIds(new Set());
+    toast.success(`${selectedPendingIds.size} tool(s) removed from list`);
+  };
+
+  const toggleSelectPending = (tempId: string) => {
+    const newSelected = new Set(selectedPendingIds);
+    if (newSelected.has(tempId)) {
+      newSelected.delete(tempId);
+    } else {
+      newSelected.add(tempId);
+    }
+    setSelectedPendingIds(newSelected);
+  };
+
+  const toggleSelectAllPending = () => {
+    if (selectedPendingIds.size === pendingTools.length) {
+      setSelectedPendingIds(new Set());
+    } else {
+      setSelectedPendingIds(new Set(pendingTools.map(t => t.tempId)));
+    }
+  };
+
+  const getStoreName = (tool: Tool) => {
+    if (tool.store) {
+      return tool.store.name;
+    }
+    // Fallback: find store from items
+    const item = items.find((i) => i.id === tool.itemId);
+    if (item?.storeId) {
+      const store = stores.find((s) => s.id === item.storeId);
+      return store?.name || "Unknown";
+    }
+    return "Unknown";
   };
 
   const getItemName = (itemId: string) => {
@@ -430,25 +611,101 @@ export function ToolEntryView({ items }: Props) {
         <div className="lg:col-span-2">
           <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Product Selection */}
+              {/* Store Selection */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Store <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={form.storeId}
+                  onChange={(e) => {
+                    const selectedStore = stores.find((s) => s.id === e.target.value);
+                    setForm({
+                      ...form,
+                      storeId: e.target.value,
+                      storeName: selectedStore?.name || "",
+                    });
+                  }}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                >
+                  <option value="">Select a store...</option>
+                  {stores.map((store) => (
+                    <option key={store.id} value={store.id}>
+                      {store.name} ({store.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Component Selection with Dropdown and Search */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Component <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={form.itemId}
-                  onChange={(e) =>
-                    setForm({ ...form, itemId: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                >
-                  <option value="">Select a component</option>
-                  {items.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} ({item.itemCode || "N/A"})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={form.itemId}
+                    onChange={(e) => setForm({ ...form, itemId: e.target.value })}
+                    disabled={!form.storeId}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Select a component...</option>
+                    {filteredItems.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} {item.itemCode ? `(${item.itemCode})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  {!form.storeId && (
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Please select a store first to see available components
+                    </p>
+                  )}
+                  {form.storeId && filteredItems.length === 0 && (
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      No components available for this store
+                    </p>
+                  )}
+                  {form.storeId && filteredItems.length > 0 && (
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {filteredItems.length} component(s) available
+                    </p>
+                  )}
+                </div>
+                {form.storeId && filteredItems.length > 5 && (
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      placeholder="Search components..."
+                      value={componentSearch}
+                      onChange={(e) => setComponentSearch(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                    />
+                    {componentSearch && searchedItems.length > 0 && (
+                      <div className="mt-2 max-h-60 overflow-y-auto rounded-lg border border-slate-300 bg-white shadow-lg dark:border-slate-600 dark:bg-slate-700">
+                        {searchedItems.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              setForm({ ...form, itemId: item.id });
+                              setComponentSearch("");
+                            }}
+                            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-600 flex justify-between items-center border-b border-slate-100 dark:border-slate-600 last:border-b-0 transition-colors"
+                          >
+                            <span className="text-slate-900 dark:text-slate-100 font-medium">{item.name}</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-600 px-2 py-1 rounded">{item.itemCode || "N/A"}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {componentSearch && searchedItems.length === 0 && (
+                      <div className="mt-2 rounded-lg border border-slate-300 bg-slate-50 p-4 text-center dark:border-slate-600 dark:bg-slate-700">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">No components found matching "{componentSearch}"</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Tool Name */}
@@ -573,8 +830,29 @@ export function ToolEntryView({ items }: Props) {
                 className="w-full rounded-lg bg-black px-6 py-2 text-white hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-medium"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                Create Tool
+                {editingPendingId ? "Update Item" : "Add Item"}
               </button>
+              {editingPendingId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingPendingId(null);
+                    setForm({
+                      storeId: form.storeId,
+                      storeName: form.storeName,
+                      itemId: "",
+                      toolName: "",
+                      operations: [{ name: "", lifeSpan: 0 }],
+                      supplierName: "",
+                      supplierCode: "",
+                      rate: "",
+                    });
+                  }}
+                  className="w-full rounded-lg border border-slate-300 px-6 py-2 text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 font-medium"
+                >
+                  Cancel
+                </button>
+              )}
             </form>
           </div>
         </div>
@@ -618,7 +896,7 @@ export function ToolEntryView({ items }: Props) {
                       <span className="font-semibold">Rate:</span> ${tool.rate.toFixed(2)}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-1">
-                      {tool.operations.map((op, idx) => (
+                      {Array.isArray(tool.operations) && tool.operations.map((op, idx) => (
                         <span
                           key={idx}
                           className="inline-block bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 text-xs px-2 py-1 rounded"
@@ -634,6 +912,113 @@ export function ToolEntryView({ items }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Pending Tools Table */}
+      {pendingTools.length > 0 && (
+        <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="border-b border-slate-200 bg-slate-50 px-6 py-3 dark:border-slate-700 dark:bg-slate-800/50 flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Tools to Create ({pendingTools.length})
+            </h2>
+            {selectedPendingIds.size > 0 && (
+              <button
+                onClick={handleBulkDeletePending}
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 transition-colors font-medium"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete Selected ({selectedPendingIds.size})
+              </button>
+            )}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+                <tr>
+                  <th className="px-6 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={pendingTools.length > 0 && selectedPendingIds.size === pendingTools.length}
+                      onChange={toggleSelectAllPending}
+                      className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Store</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Component</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Tool Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Operations</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Supplier</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Code</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Rate</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                {pendingTools.map((tool) => (
+                  <tr key={tool.tempId} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedPendingIds.has(tool.tempId)}
+                        onChange={() => toggleSelectPending(tool.tempId)}
+                        className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+                      />
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">{tool.storeName}</td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">{tool.itemName}</td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">{tool.toolName}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <div className="flex flex-wrap gap-1">
+                        {tool.operations.map((op, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-block bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 px-2 py-1 rounded text-xs"
+                          >
+                            {op.name} (LS: {op.lifeSpan})
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">{tool.supplierName}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{tool.supplierCode}</td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">${tool.rate.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleEditPendingTool(tool)}
+                          className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
+                          title="Edit"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePendingTool(tool.tempId)}
+                          className="p-1 rounded hover:bg-red-200 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex justify-between items-center">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Ready to create {pendingTools.length} tool{pendingTools.length > 1 ? "s" : ""}
+            </p>
+            <button
+              onClick={handleCreateAllTools}
+              disabled={submitting}
+              className="inline-flex items-center gap-2 rounded-lg bg-black px-6 py-2 text-white hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium dark:bg-slate-950 dark:hover:bg-black"
+            >
+              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Create Tools
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* All Tools Table */}
       <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 overflow-hidden">
@@ -673,6 +1058,9 @@ export function ToolEntryView({ items }: Props) {
                   />
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Store
+                </th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Product
                 </th>
                 <th className="hidden sm:table-cell px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -698,7 +1086,7 @@ export function ToolEntryView({ items }: Props) {
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={9} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span className="text-sm">Loading tools...</span>
@@ -707,7 +1095,7 @@ export function ToolEntryView({ items }: Props) {
                 </tr>
               ) : tools.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+                  <td colSpan={9} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
                     No tools created yet
                   </td>
                 </tr>
@@ -723,6 +1111,9 @@ export function ToolEntryView({ items }: Props) {
                       />
                     </td>
                     <td className="px-3 py-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100 font-medium">
+                      {getStoreName(tool)}
+                    </td>
+                    <td className="px-3 py-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                       {getItemName(tool.itemId)}
                     </td>
                     <td className="hidden sm:table-cell px-3 py-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100">
@@ -739,7 +1130,7 @@ export function ToolEntryView({ items }: Props) {
                     </td>
                     <td className="hidden xl:table-cell px-3 py-3 text-xs">
                       <div className="flex flex-wrap gap-1">
-                        {tool.operations.slice(0, 2).map((op, idx) => (
+                        {Array.isArray(tool.operations) && tool.operations.slice(0, 2).map((op, idx) => (
                           <span
                             key={idx}
                             className="inline-block bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded text-xs font-medium"
@@ -747,7 +1138,7 @@ export function ToolEntryView({ items }: Props) {
                             {op.name} (LS: {op.lifeSpan})
                           </span>
                         ))}
-                        {tool.operations.length > 2 && (
+                        {Array.isArray(tool.operations) && tool.operations.length > 2 && (
                           <span className="inline-block bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded text-xs font-medium">
                             +{tool.operations.length - 2} more
                           </span>

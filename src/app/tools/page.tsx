@@ -81,6 +81,7 @@ export default async function ToolEntryPage() {
       itemCode: true,
       variant: true,
       description: true,
+      storeId: true,
       supplier: {
         select: {
           id: true,

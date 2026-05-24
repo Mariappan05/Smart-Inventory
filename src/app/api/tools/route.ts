@@ -12,6 +12,16 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const itemId = searchParams.get("itemId");
 
+    // If storeId is missing from session, fetch from database
+    if (!session.storeId) {
+      const user = await prisma.user.findUnique({
+        where: { id: session.userId },
+        select: { storeId: true, email: true }
+      });
+      session.storeId = user?.storeId || null;
+      session.email = session.email || user?.email || "";
+    }
+
     const storeFilter = getStoreWhereClause(session);
     let whereClause: any = { ...storeFilter };
     
@@ -29,11 +39,26 @@ export async function GET(request: NextRequest) {
             itemCode: true,
           },
         },
+        store: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ success: true, data: tools });
+    // Parse operations if stored as JSON string
+    const toolsWithParsedOperations = tools.map(tool => ({
+      ...tool,
+      operations: typeof tool.operations === 'string' 
+        ? JSON.parse(tool.operations) 
+        : tool.operations
+    }));
+
+    return NextResponse.json({ success: true, data: toolsWithParsedOperations });
   } catch (error) {
     console.error("Failed to fetch tools:", error);
     return NextResponse.json(
@@ -59,9 +84,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { itemId, toolName, operations, supplierName, supplierCode, rate } = body;
+    const { itemId, toolName, operations, supplierName, supplierCode, rate, storeId } = body;
 
     // Validation
+    if (!storeId || !storeId.trim()) {
+      return NextResponse.json(
+        { success: false, error: "Store is required" },
+        { status: 400 }
+      );
+    }
+
     if (!itemId || !itemId.trim()) {
       return NextResponse.json(
         { success: false, error: "Component is required" },
@@ -120,20 +152,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const storeId = getStoreIdForCreate(session);
-    
-    if (!storeId) {
-      return NextResponse.json(
-        { success: false, error: "Store assignment required" },
-        { status: 400 }
-      );
-    }
-
     // Verify item exists and belongs to same store
     const item = await prisma.item.findFirst({
       where: { 
         id: itemId.trim(),
-        storeId
+        storeId: storeId.trim()
       },
     });
 
@@ -150,13 +173,13 @@ export async function POST(request: NextRequest) {
         itemId: itemId.trim(),
         toolName: toolName.trim(),
         supplierCode: supplierCode.trim(),
-        storeId,
+        storeId: storeId.trim(),
       },
     });
 
     if (existingTool) {
       return NextResponse.json(
-        { success: false, error: "A tool with the same name, component, and supplier code already exists in your store" },
+        { success: false, error: "A tool with the same name, component, and supplier code already exists in this store" },
         { status: 400 }
       );
     }
@@ -173,7 +196,7 @@ export async function POST(request: NextRequest) {
         supplierName: supplierName.trim(),
         supplierCode: supplierCode.trim(),
         rate: parseFloat(rate),
-        storeId,
+        storeId: storeId.trim(),
         createdById: session.userId,
       },
       include: {

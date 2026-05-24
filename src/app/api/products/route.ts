@@ -77,8 +77,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { customerName, componentName, componentCode } = body;
-    console.log("[Products API] Extracted fields:", { customerName, componentName, componentCode });
+    const { customerName, componentName, componentCode, storeId } = body;
+    console.log("[Products API] Extracted fields:", { customerName, componentName, componentCode, storeId });
 
     // Validation
     if (!customerName || !customerName.trim()) {
@@ -105,26 +105,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let storeId = getStoreIdForCreate(session);
-    console.log("[Products API] Store ID from session:", storeId);
-    
-    // If storeId is missing from session, fetch from database
-    if (!storeId) {
-      const user = await prisma.user.findUnique({
-        where: { id: session.userId },
-        select: { storeId: true }
-      });
-      storeId = user?.storeId || null;
-      console.log("[Products API] Store ID from database:", storeId);
-    }
-    
-    if (!storeId) {
-      console.log("[Products API] Validation failed: No store assigned");
+    if (!storeId || !storeId.trim()) {
+      console.log("[Products API] Validation failed: Store ID missing");
       return NextResponse.json(
-        { success: false, error: "Store assignment required" },
+        { success: false, error: "Store selection is required" },
         { status: 400 }
       );
     }
+
+    console.log("[Products API] Using Store ID from request:", storeId);
+
+    console.log("[Products API] Using Store ID from request:", storeId);
 
     // Check for duplicate itemCode within the same store
     const existingProduct = await prisma.item.findFirst({
