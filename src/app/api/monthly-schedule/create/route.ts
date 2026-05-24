@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   // Check role permissions
   if (!["ADMIN", "ADMIN_MANAGER", "STORE_MANAGER"].includes(session.role || "")) {
     return NextResponse.json(
-      { success: false, message: "Forbidden" },
+      { success: false, message: "Forbidden" }, 
       { status: 403 }
     );
   }
