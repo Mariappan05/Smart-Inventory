@@ -43,9 +43,6 @@ const allNavItems = [
   // Machines - Admin, Store Manager
   { label: "Machines", icon: Warehouse, href: "/machines/new", roles: ["ADMIN", "STORE_MANAGER"] },
   
-  // Supplier Schedule - Admin, Store Manager
-  { label: "Supplier Schedule", icon: Calendar, href: "/schedules/supplier", roles: ["ADMIN", "STORE_MANAGER"] },
-  
   // Supplier PO - Admin, Store Manager
   { label: "Supplier PO", icon: FileText, href: "/supplier-po", roles: ["ADMIN", "STORE_MANAGER"] },
   
@@ -57,9 +54,6 @@ const allNavItems = [
   
   // Request - Sub Store, Admin, Store Manager
   { label: "Request", icon: FileText, href: "/request", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"] },
-  
-  // Weekly Schedule - Sub Store, Admin, Store Manager
-  { label: "Weekly Schedule", icon: Calendar, href: "/schedules", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"] },
   
   // Production Entry - Sub Store, Admin, Store Manager
   { label: "Production Entry", icon: Package, href: "/production", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"] },

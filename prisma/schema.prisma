@@ -416,6 +416,28 @@ model Notification {
   @@index([createdAt])
 }
 
+model ToolRequest {
+  id                 String   @id @default(cuid())
+  toolName           String   @db.VarChar(160)
+  componentName      String   @db.VarChar(160)
+  componentCode      String   @db.VarChar(100)
+  productionQuantity Int
+  fromDate           DateTime
+  toDate             DateTime
+  machineNumber      String   @db.VarChar(100)
+  machineCode        String   @db.VarChar(100)
+  storeCode          String   @db.VarChar(10)
+  storeName          String   @db.VarChar(120)
+  createdById        String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([storeCode])
+  @@index([createdById])
+  @@index([fromDate])
+  @@index([createdAt])
+}
+
 enum UserRole {
   ADMIN
   ADMIN_MANAGER

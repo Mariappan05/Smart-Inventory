@@ -1,0 +1,602 @@
+MODERN DROPDOWN IMPLEMENTATION GUIDE
+=====================================
+
+This guide explains how to implement the new ModernDropdown component across the entire application.
+
+COMPONENT LOCATION
+------------------
+- Main Component: src/components/ui/ModernDropdown.tsx
+- Backward Compatible Wrapper: src/components/ui/SearchableSelect.tsx
+- Usage Examples: src/components/ui/ModernDropdownExamples.tsx
+
+KEY FEATURES
+------------
+✓ Modern clean design with black theme support
+✓ Rounded borders and soft shadows
+✓ Smooth hover effects and animations
+✓ Fully responsive (Mobile, Tablet, Desktop)
+✓ Search field inside dropdown
+✓ Single and multiple select modes
+✓ Keyboard navigation (Arrow keys, Enter, Escape, Tab)
+✓ Scroll support for large datasets
+✓ Clear selected option button
+✓ Loading state with spinner
+✓ Empty state ("No data found")
+✓ Error state with validation
+✓ Disabled state
+✓ Disabled individual options
+✓ API-based search support
+✓ Custom max height
+✓ Dark/light mode compatible
+✓ Touch-friendly for mobile
+✓ Accessible design
+
+BASIC USAGE
+-----------
+
+import { ModernDropdown } from "@/components/ui/ModernDropdown";
+
+// Single Select
+<ModernDropdown
+  label="Store"
+  required
+  options={storeOptions}
+  value={selectedStore}
+  onChange={(value) => setSelectedStore(value as string)}
+  placeholder="Select a store..."
+  searchPlaceholder="Search stores..."
+/>
+
+// Multiple Select
+<ModernDropdown
+  label="Users"
+  mode="multiple"
+  options={userOptions}
+  value={selectedUsers}
+  onChange={(value) => setSelectedUsers(value as string[])}
+  placeholder="Select users..."
+/>
+
+OPTION FORMAT
+-------------
+const options = [
+  {
+    value: "1",                    // Required: Unique identifier
+    label: "Store A",              // Required: Display text
+    subtitle: "Code: ST-001",      // Optional: Secondary text
+    disabled: false                // Optional: Disable this option
+  }
+];
+
+PROPS REFERENCE
+---------------
+
+Data Props:
+- options: DropdownOption[]        // Array of options
+- value: string | string[]         // Selected value(s)
+- onChange: (value) => void        // Change handler
+
+Configuration Props:
+- mode: "single" | "multiple"      // Selection mode (default: "single")
+- placeholder: string              // Button placeholder text
+- searchPlaceholder: string        // Search input placeholder
+- emptyMessage: string             // Message when no options found
+
+State Props:
+- disabled: boolean                // Disable entire dropdown
+- loading: boolean                 // Show loading spinner
+- required: boolean                // Show required asterisk
+
+Styling Props:
+- label: string                    // Label text above dropdown
+- className: string                // Additional CSS classes
+- error: string                    // Error message below dropdown
+
+Feature Props:
+- searchable: boolean              // Enable/disable search (default: true)
+- clearable: boolean               // Show clear button (default: true)
+- maxHeight: string                // Max height of dropdown (default: "320px")
+
+Callback Props:
+- onSearch: (term) => void         // Called when user types in search
+- onOpen: () => void               // Called when dropdown opens
+- onClose: () => void              // Called when dropdown closes
+
+IMPLEMENTATION STEPS
+--------------------
+
+STEP 1: Update Tools Page
+--------------------------
+File: src/views/tools/ToolEntryView.tsx
+
+Replace store dropdown:
+<ModernDropdown
+  label="Store"
+  required
+  options={storeOptions}
+  value={form.storeId}
+  onChange={(value) => {
+    const selectedStore = stores.find((s) => s.id === value);
+    setForm({
+      ...form,
+      storeId: value as string,
+      storeName: selectedStore?.name || "",
+    });
+  }}
+  placeholder="Select a store..."
+  searchPlaceholder="Search stores..."
+/>
+
+STEP 2: Update Products Page
+-----------------------------
+File: src/views/products/ProductsView.tsx
+
+Add store dropdown:
+<ModernDropdown
+  label="Store"
+  required
+  options={storeOptions}
+  value={selectedStore}
+  onChange={(value) => setSelectedStore(value as string)}
+  placeholder="Select store..."
+  searchPlaceholder="Search stores..."
+/>
+
+Add supplier dropdown:
+<ModernDropdown
+  label="Supplier"
+  options={supplierOptions}
+  value={selectedSupplier}
+  onChange={(value) => setSelectedSupplier(value as string)}
+  placeholder="Select supplier..."
+  searchPlaceholder="Search suppliers..."
+/>
+
+STEP 3: Update Users Page
+--------------------------
+File: src/views/users/UsersView.tsx
+
+Add role dropdown:
+<ModernDropdown
+  label="Role"
+  required
+  searchable={false}
+  clearable={false}
+  options={[
+    { value: "ADMIN", label: "Administrator" },
+    { value: "EMPLOYEE", label: "Employee" }
+  ]}
+  value={form.role}
+  onChange={(value) => setForm({ ...form, role: value as string })}
+  placeholder="Select role..."
+/>
+
+Add store dropdown:
+<ModernDropdown
+  label="Store"
+  required
+  options={storeOptions}
+  value={form.storeId}
+  onChange={(value) => setForm({ ...form, storeId: value as string })}
+  placeholder="Select store..."
+  searchPlaceholder="Search stores..."
+/>
+
+STEP 4: Update Machines Page
+-----------------------------
+File: src/views/machines/MachinesView.tsx
+
+Add store dropdown:
+<ModernDropdown
+  label="Store"
+  required
+  options={storeOptions}
+  value={form.storeId}
+  onChange={(value) => setForm({ ...form, storeId: value as string })}
+  placeholder="Select store..."
+  searchPlaceholder="Search stores..."
+/>
+
+STEP 5: Update Suppliers Page
+------------------------------
+File: src/views/suppliers/SuppliersView.tsx
+
+Add category dropdown:
+<ModernDropdown
+  label="Category"
+  options={categoryOptions}
+  value={form.category}
+  onChange={(value) => setForm({ ...form, category: value as string })}
+  placeholder="Select category..."
+  searchPlaceholder="Search categories..."
+/>
+
+STEP 6: Update Inward/Outward Pages
+------------------------------------
+Files: 
+- src/views/inward/InwardView.tsx
+- src/views/outward/OutwardView.tsx
+
+Add store dropdown:
+<ModernDropdown
+  label="Store"
+  required
+  options={storeOptions}
+  value={selectedStore}
+  onChange={(value) => setSelectedStore(value as string)}
+  placeholder="Select store..."
+/>
+
+Add component dropdown:
+<ModernDropdown
+  label="Component"
+  required
+  disabled={!selectedStore}
+  options={componentOptions}
+  value={selectedComponent}
+  onChange={(value) => setSelectedComponent(value as string)}
+  placeholder={!selectedStore ? "Select store first..." : "Select component..."}
+/>
+
+STEP 7: Update Production Entry Page
+-------------------------------------
+File: src/views/production/ProductionEntryView.tsx
+
+Add machine dropdown:
+<ModernDropdown
+  label="Machine"
+  required
+  options={machineOptions}
+  value={form.machineId}
+  onChange={(value) => setForm({ ...form, machineId: value as string })}
+  placeholder="Select machine..."
+  searchPlaceholder="Search machines..."
+/>
+
+Add component dropdown:
+<ModernDropdown
+  label="Component"
+  required
+  options={componentOptions}
+  value={form.componentId}
+  onChange={(value) => setForm({ ...form, componentId: value as string })}
+  placeholder="Select component..."
+  searchPlaceholder="Search components..."
+/>
+
+STEP 8: Update Weekly Schedule Page
+------------------------------------
+File: src/views/schedule/WeeklyScheduleView.tsx
+
+Add store dropdown:
+<ModernDropdown
+  label="Store"
+  required
+  options={storeOptions}
+  value={selectedStore}
+  onChange={(value) => setSelectedStore(value as string)}
+  placeholder="Select store..."
+/>
+
+STEP 9: Update Monthly Plan Page
+---------------------------------
+File: src/views/plan/MonthlyPlanView.tsx
+
+Add store dropdown:
+<ModernDropdown
+  label="Store"
+  required
+  options={storeOptions}
+  value={selectedStore}
+  onChange={(value) => setSelectedStore(value as string)}
+  placeholder="Select store..."
+/>
+
+STEP 10: Update Dashboard Filters
+----------------------------------
+File: src/views/dashboard/DashboardView.tsx
+
+Add store filter:
+<ModernDropdown
+  label="Filter by Store"
+  options={storeOptions}
+  value={filterStore}
+  onChange={(value) => setFilterStore(value as string)}
+  placeholder="All stores..."
+  searchPlaceholder="Search stores..."
+/>
+
+COMMON PATTERNS
+---------------
+
+Pattern 1: Store-Based Component Filtering
+-------------------------------------------
+const [selectedStore, setSelectedStore] = useState("");
+const [selectedComponent, setSelectedComponent] = useState("");
+const [componentOptions, setComponentOptions] = useState([]);
+
+useEffect(() => {
+  if (selectedStore) {
+    fetchComponentsForStore(selectedStore);
+  } else {
+    setComponentOptions([]);
+    setSelectedComponent("");
+  }
+}, [selectedStore]);
+
+<ModernDropdown
+  label="Store"
+  required
+  options={storeOptions}
+  value={selectedStore}
+  onChange={(value) => setSelectedStore(value as string)}
+  placeholder="Select store..."
+/>
+
+<ModernDropdown
+  label="Component"
+  required
+  disabled={!selectedStore}
+  options={componentOptions}
+  value={selectedComponent}
+  onChange={(value) => setSelectedComponent(value as string)}
+  placeholder={!selectedStore ? "Select store first..." : "Select component..."}
+/>
+
+Pattern 2: Component-Based Tool Filtering
+------------------------------------------
+const [selectedComponent, setSelectedComponent] = useState("");
+const [selectedTool, setSelectedTool] = useState("");
+const [toolOptions, setToolOptions] = useState([]);
+
+useEffect(() => {
+  if (selectedComponent) {
+    fetchToolsForComponent(selectedComponent);
+  } else {
+    setToolOptions([]);
+    setSelectedTool("");
+  }
+}, [selectedComponent]);
+
+<ModernDropdown
+  label="Component"
+  required
+  options={componentOptions}
+  value={selectedComponent}
+  onChange={(value) => setSelectedComponent(value as string)}
+  placeholder="Select component..."
+/>
+
+<ModernDropdown
+  label="Tool"
+  required
+  disabled={!selectedComponent}
+  loading={loadingTools}
+  options={toolOptions}
+  value={selectedTool}
+  onChange={(value) => setSelectedTool(value as string)}
+  placeholder={!selectedComponent ? "Select component first..." : "Select tool..."}
+/>
+
+Pattern 3: API Search with Debounce
+------------------------------------
+const [searchResults, setSearchResults] = useState([]);
+const [loading, setLoading] = useState(false);
+
+const handleSearch = async (searchTerm: string) => {
+  if (!searchTerm) return;
+  
+  setLoading(true);
+  try {
+    const res = await fetch(`/api/items?search=${searchTerm}`);
+    const data = await res.json();
+    if (data.success) {
+      const options = data.data.map((item: any) => ({
+        value: item.id,
+        label: item.name,
+        subtitle: `Code: ${item.code}`,
+      }));
+      setSearchResults(options);
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+<ModernDropdown
+  label="Search Items"
+  loading={loading}
+  options={searchResults}
+  value={selectedItem}
+  onChange={(value) => setSelectedItem(value as string)}
+  onSearch={handleSearch}
+  placeholder="Search items..."
+/>
+
+Pattern 4: Form Validation with Error
+--------------------------------------
+const [form, setForm] = useState({ storeId: "" });
+const [errors, setErrors] = useState({ storeId: "" });
+
+const handleSubmit = () => {
+  const newErrors = { storeId: "" };
+  
+  if (!form.storeId) {
+    newErrors.storeId = "Store is required";
+  }
+  
+  setErrors(newErrors);
+  
+  if (!newErrors.storeId) {
+    // Submit form
+  }
+};
+
+<ModernDropdown
+  label="Store"
+  required
+  options={storeOptions}
+  value={form.storeId}
+  onChange={(value) => {
+    setForm({ ...form, storeId: value as string });
+    setErrors({ ...errors, storeId: "" });
+  }}
+  error={errors.storeId}
+  placeholder="Select store..."
+/>
+
+STYLING CUSTOMIZATION
+---------------------
+
+The dropdown uses Tailwind CSS classes and supports dark mode automatically.
+
+Selected item styling:
+- Background: Black (bg-black)
+- Text: White (text-white)
+- Check icon: White
+
+Hover item styling:
+- Background: Light gray (bg-slate-100)
+- Dark mode: Dark gray (dark:bg-slate-600)
+
+Search input:
+- Sticky at top
+- Border focus: Slate-500
+- Ring: Slate-500/20
+
+RESPONSIVE BEHAVIOR
+-------------------
+
+Mobile (< 640px):
+- Full width dropdown
+- Touch-friendly tap targets
+- Optimized spacing
+
+Tablet (640px - 1024px):
+- Adaptive width
+- Comfortable spacing
+
+Desktop (> 1024px):
+- Fixed width or container-based
+- Hover effects enabled
+
+KEYBOARD SHORTCUTS
+------------------
+
+When dropdown is closed:
+- Enter / Space / Arrow Down: Open dropdown
+
+When dropdown is open:
+- Arrow Down: Move to next option
+- Arrow Up: Move to previous option
+- Enter: Select highlighted option
+- Escape: Close dropdown
+- Tab: Close dropdown and move to next field
+
+ACCESSIBILITY
+-------------
+
+- ARIA labels for screen readers
+- Keyboard navigation support
+- Focus management
+- High contrast support
+- Touch target sizes (minimum 44x44px)
+
+PERFORMANCE TIPS
+----------------
+
+1. Use React.memo for option rendering with large datasets
+2. Implement virtual scrolling for 1000+ options
+3. Debounce API search calls (300ms recommended)
+4. Cache fetched options when possible
+5. Use loading state during API calls
+
+MIGRATION FROM OLD DROPDOWNS
+-----------------------------
+
+Old SearchableSelect:
+<SearchableSelect
+  label="Store"
+  options={options}
+  value={value}
+  onChange={onChange}
+/>
+
+New ModernDropdown:
+<ModernDropdown
+  label="Store"
+  options={options}
+  value={value}
+  onChange={onChange}
+/>
+
+Note: SearchableSelect now uses ModernDropdown internally,
+so existing code will continue to work without changes.
+
+TESTING CHECKLIST
+-----------------
+
+□ Dropdown opens on click
+□ Search filters options correctly
+□ Keyboard navigation works
+□ Selected item displays correctly
+□ Clear button removes selection
+□ Loading state shows spinner
+□ Error state displays message
+□ Disabled state prevents interaction
+□ Multiple select allows multiple selections
+□ Responsive on mobile devices
+□ Dark mode styling correct
+□ Touch interactions work on mobile
+□ Dropdown closes on outside click
+□ API search returns results
+□ Empty state shows correct message
+
+TROUBLESHOOTING
+---------------
+
+Issue: Dropdown not opening
+Solution: Check if disabled or loading prop is set
+
+Issue: Options not filtering
+Solution: Verify searchable prop is true (default)
+
+Issue: Selected value not displaying
+Solution: Ensure value matches an option's value property
+
+Issue: Dropdown stays open
+Solution: Check for JavaScript errors preventing close handler
+
+Issue: Styling looks wrong
+Solution: Verify Tailwind CSS is properly configured
+
+Issue: API search not working
+Solution: Check onSearch callback and ensure debouncing
+
+SUPPORT
+-------
+
+For issues or questions:
+1. Check ModernDropdownExamples.tsx for usage examples
+2. Review this implementation guide
+3. Check component props in ModernDropdown.tsx
+4. Test with example data first
+
+COMPLETION CHECKLIST
+--------------------
+
+□ Tools Page - Store dropdown
+□ Products Page - Store and Supplier dropdowns
+□ Users Page - Role and Store dropdowns
+□ Machines Page - Store dropdown
+□ Suppliers Page - Category dropdown
+□ Inward Page - Store and Component dropdowns
+□ Outward Page - Store and Component dropdowns
+□ Production Entry - Machine and Component dropdowns
+□ Weekly Schedule - Store dropdown
+□ Monthly Plan - Store dropdown
+□ Request Page - Already using SearchableSelect (compatible)
+□ Dashboard - Store filter dropdown
+□ All other pages with dropdowns updated

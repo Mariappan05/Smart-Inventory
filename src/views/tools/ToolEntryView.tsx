@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { X, Plus, Loader2, Edit2, Trash2 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { ModernDropdown } from "@/components/ui/ModernDropdown";
+import { formatDate, formatDateTime } from "@/utils/dateTimeFormat";
 
 type Item = {
   id: string;
@@ -75,7 +78,6 @@ interface PendingTool {
 
 export function ToolEntryView({ items }: Props) {
   const [stores, setStores] = useState<Store[]>([]);
-  const [componentSearch, setComponentSearch] = useState("");
   const [form, setForm] = useState<ToolFormData & { storeId: string; storeName: string }>({
     storeId: "",
     storeName: "",
@@ -141,14 +143,6 @@ export function ToolEntryView({ items }: Props) {
   // Filter items by selected store
   const filteredItems = form.storeId 
     ? items.filter(item => item.storeId === form.storeId)
-    : [];
-
-  // Filter items by search (show dropdown only when searching)
-  const searchedItems = componentSearch.trim()
-    ? filteredItems.filter(item => 
-        item.name.toLowerCase().includes(componentSearch.toLowerCase()) ||
-        (item.itemCode && item.itemCode.toLowerCase().includes(componentSearch.toLowerCase()))
-      )
     : [];
 
   const fetchTools = async () => {
@@ -576,6 +570,12 @@ export function ToolEntryView({ items }: Props) {
     }
   };
 
+  const storeOptions = stores.map((store) => ({
+    value: store.id,
+    label: store.name,
+    subtitle: `Code: ${store.code}`,
+  }));
+
   const getStoreName = (tool: Tool) => {
     if (tool.store) {
       return tool.store.name;
@@ -612,101 +612,39 @@ export function ToolEntryView({ items }: Props) {
           <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Store Selection */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Store <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={form.storeId}
-                  onChange={(e) => {
-                    const selectedStore = stores.find((s) => s.id === e.target.value);
-                    setForm({
-                      ...form,
-                      storeId: e.target.value,
-                      storeName: selectedStore?.name || "",
-                    });
-                  }}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                >
-                  <option value="">Select a store...</option>
-                  {stores.map((store) => (
-                    <option key={store.id} value={store.id}>
-                      {store.name} ({store.code})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SearchableSelect
+                label="Store"
+                required
+                options={storeOptions}
+                value={form.storeId}
+                onChange={(value) => {
+                  const selectedStore = stores.find((s) => s.id === value);
+                  setForm({
+                    ...form,
+                    storeId: value,
+                    storeName: selectedStore?.name || "",
+                  });
+                }}
+                placeholder="Select a store..."
+                searchPlaceholder="Search stores..."
+              />
 
-              {/* Component Selection with Dropdown and Search */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Component <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    value={form.itemId}
-                    onChange={(e) => setForm({ ...form, itemId: e.target.value })}
-                    disabled={!form.storeId}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <option value="">Select a component...</option>
-                    {filteredItems.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name} {item.itemCode ? `(${item.itemCode})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                  {!form.storeId && (
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      Please select a store first to see available components
-                    </p>
-                  )}
-                  {form.storeId && filteredItems.length === 0 && (
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      No components available for this store
-                    </p>
-                  )}
-                  {form.storeId && filteredItems.length > 0 && (
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {filteredItems.length} component(s) available
-                    </p>
-                  )}
-                </div>
-                {form.storeId && filteredItems.length > 5 && (
-                  <div className="mt-2">
-                    <input
-                      type="text"
-                      placeholder="Search components..."
-                      value={componentSearch}
-                      onChange={(e) => setComponentSearch(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                    />
-                    {componentSearch && searchedItems.length > 0 && (
-                      <div className="mt-2 max-h-60 overflow-y-auto rounded-lg border border-slate-300 bg-white shadow-lg dark:border-slate-600 dark:bg-slate-700">
-                        {searchedItems.map((item) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => {
-                              setForm({ ...form, itemId: item.id });
-                              setComponentSearch("");
-                            }}
-                            className="w-full px-4 py-3 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-600 flex justify-between items-center border-b border-slate-100 dark:border-slate-600 last:border-b-0 transition-colors"
-                          >
-                            <span className="text-slate-900 dark:text-slate-100 font-medium">{item.name}</span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-600 px-2 py-1 rounded">{item.itemCode || "N/A"}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {componentSearch && searchedItems.length === 0 && (
-                      <div className="mt-2 rounded-lg border border-slate-300 bg-slate-50 p-4 text-center dark:border-slate-600 dark:bg-slate-700">
-                        <p className="text-sm text-slate-500 dark:text-slate-400">No components found matching "{componentSearch}"</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              {/* Component Selection */}
+              <ModernDropdown
+                label="Component"
+                required
+                options={filteredItems.map((item) => ({
+                  value: item.id,
+                  label: item.name,
+                  subtitle: item.itemCode ? `Code: ${item.itemCode}` : undefined,
+                }))}
+                value={form.itemId}
+                onChange={(value) => setForm({ ...form, itemId: value })}
+                placeholder={!form.storeId ? "Select a store first..." : "Select a component..."}
+                searchPlaceholder="Search components..."
+                disabled={!form.storeId}
+                emptyMessage={form.storeId && filteredItems.length === 0 ? "No components available for this store" : undefined}
+              />
 
               {/* Tool Name */}
               <div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Loader2, Edit2, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { ModernDropdown } from "@/components/ui/ModernDropdown";
 
 type Operation = {
   name: string;
@@ -82,10 +83,6 @@ export function TentativeScheduleView({ onScheduleCreated }: { onScheduleCreated
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [componentSearch, setComponentSearch] = useState("");
-  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-  const [showComponentDropdown, setShowComponentDropdown] = useState(false);
 
   useEffect(() => {
     fetchCustomerNames();
@@ -358,13 +355,16 @@ export function TentativeScheduleView({ onScheduleCreated }: { onScheduleCreated
     }
   };
 
-  const filteredCustomers = customerNames.filter((name) =>
-    name.toLowerCase().includes(customerSearch.toLowerCase())
-  );
+  const customerOptions = customerNames.map((name) => ({
+    value: name,
+    label: name,
+  }));
 
-  const filteredComponents = components.filter((comp) =>
-    comp.name.toLowerCase().includes(componentSearch.toLowerCase())
-  );
+  const componentOptions = components.map((comp) => ({
+    value: comp.id,
+    label: comp.name,
+    subtitle: `Code: ${comp.itemCode || "N/A"}`,
+  }));
 
   return (
     <div className="space-y-6">
@@ -386,8 +386,6 @@ export function TentativeScheduleView({ onScheduleCreated }: { onScheduleCreated
             setForm({ selectedCustomer: "", selectedComponent: "", componentQuantity: "" });
             setComponents([]);
             setCalculatedTools([]);
-            setCustomerSearch("");
-            setComponentSearch("");
           }}
           className="inline-flex items-center gap-2 rounded-lg bg-black px-6 py-2 text-white hover:bg-gray-900 transition-colors font-medium dark:bg-slate-950 dark:hover:bg-black"
         >
@@ -405,98 +403,36 @@ export function TentativeScheduleView({ onScheduleCreated }: { onScheduleCreated
 
           <div className="space-y-6">
             {/* Customer Selection */}
-            <div className="relative">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Customer Name <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search and select customer..."
-                  value={showCustomerDropdown ? customerSearch : form.selectedCustomer}
-                  onChange={(e) => {
-                    if (showCustomerDropdown) {
-                      setCustomerSearch(e.target.value);
-                    }
-                  }}
-                  onFocus={() => {
-                    setShowCustomerDropdown(true);
-                    setComponentSearch("");
-                    setShowComponentDropdown(false);
-                  }}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                />
-                {showCustomerDropdown && (
-                  <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-700 shadow-lg z-10">
-                    {filteredCustomers.map((customer) => (
-                      <button
-                        key={customer}
-                        type="button"
-                        onClick={() => {
-                          setForm({ 
-                            ...form, 
-                            selectedCustomer: customer, 
-                            selectedComponent: "", 
-                            componentQuantity: "" 
-                          });
-                          setShowCustomerDropdown(false);
-                          setCustomerSearch("");
-                          setComponents([]);
-                          setCalculatedTools([]);
-                          setComponentSearch("");
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-100"
-                      >
-                        {customer}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <ModernDropdown
+              label="Customer Name"
+              required
+              options={customerOptions}
+              value={form.selectedCustomer}
+              onChange={(value) => {
+                setForm({ 
+                  ...form, 
+                  selectedCustomer: value as string, 
+                  selectedComponent: "", 
+                  componentQuantity: "" 
+                });
+                setComponents([]);
+                setCalculatedTools([]);
+              }}
+              placeholder="Select customer..."
+              searchPlaceholder="Search customers..."
+            />
 
             {/* Component Selection */}
             {form.selectedCustomer && (
-              <div className="relative">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Component Name <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search and select component..."
-                    value={showComponentDropdown ? componentSearch : getSelectedComponentName()}
-                    onChange={(e) => {
-                      if (showComponentDropdown) {
-                        setComponentSearch(e.target.value);
-                      }
-                    }}
-                    onFocus={() => {
-                      setShowComponentDropdown(true);
-                      setComponentSearch("");
-                    }}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                  />
-                  {showComponentDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-700 shadow-lg z-10">
-                      {filteredComponents.map((component) => (
-                        <button
-                          key={component.id}
-                          type="button"
-                          onClick={() => {
-                            setForm({ ...form, selectedComponent: component.id });
-                            setShowComponentDropdown(false);
-                            setComponentSearch("");
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-100"
-                        >
-                          {component.name} ({component.itemCode || "N/A"})
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <ModernDropdown
+                label="Component Name"
+                required
+                options={componentOptions}
+                value={form.selectedComponent}
+                onChange={(value) => setForm({ ...form, selectedComponent: value as string })}
+                placeholder="Select component..."
+                searchPlaceholder="Search components..."
+              />
             )}
 
             {/* Quantity Input */}
@@ -597,8 +533,6 @@ export function TentativeScheduleView({ onScheduleCreated }: { onScheduleCreated
             setForm({ selectedCustomer: "", selectedComponent: "", componentQuantity: "" });
             setComponents([]);
             setCalculatedTools([]);
-            setCustomerSearch("");
-            setComponentSearch("");
             setEditingId(null);
           }}
           className="inline-flex items-center gap-2 rounded-lg bg-black px-6 py-2 text-white hover:bg-gray-900 transition-colors font-medium dark:bg-slate-950 dark:hover:bg-black"

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Download, FileText, Search, Printer, RefreshCcw } from "lucide-react";
 import toast from "react-hot-toast";
 import type { ReportType } from "@/types/reports";
-import { Select } from "@/components/ui/Select";
+import { ModernDropdown } from "@/components/ui/ModernDropdown";
 
 type ReportResponse = {
   data: {
@@ -111,10 +111,13 @@ export function ReportViews() {
         </div>
 
         <div className="mt-5 grid gap-3 lg:grid-cols-[1.1fr_1fr_1fr_1fr_auto]">
-          <Select
-            value={type}
-            onChange={(e) => { setType(e.target.value as ReportType); setPage(1); }}
+          <ModernDropdown
+            searchable={false}
+            clearable={false}
             options={Object.entries(reportLabels).map(([value, label]) => ({ value, label }))}
+            value={type}
+            onChange={(value) => { setType(value as ReportType); setPage(1); }}
+            placeholder="Select report type..."
           />
           <div className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 shadow-sm transition-all duration-200 hover:border-slate-400 hover:shadow-md focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-slate-500 dark:focus-within:border-blue-400 dark:focus-within:ring-blue-400/10">
             <Search className="h-4 w-4 text-slate-400 transition-colors dark:text-slate-500" />

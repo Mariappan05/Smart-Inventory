@@ -21,6 +21,7 @@ export async function GET(request: Request) {
     
     let name = payload.name ?? null;
     let imageUrl = null;
+    let store = null;
     
     // Only fetch from database if details are explicitly requested
     if (includeDetails) {
@@ -29,10 +30,18 @@ export async function GET(request: Request) {
           where: { id: payload.sub }, 
           select: { 
             name: true,
+            storeId: true,
             images: {
               select: { url: true, isPrimary: true },
               orderBy: { isPrimary: "desc" },
               take: 1,
+            },
+            store: {
+              select: {
+                id: true,
+                code: true,
+                name: true,
+              },
             },
           },
         });
@@ -40,6 +49,7 @@ export async function GET(request: Request) {
         if (user) {
           name = user.name;
           imageUrl = user.images?.[0]?.url || null;
+          store = user.store;
         }
       } catch (dbError) {
         console.warn("[Session] Database error fetching user details, using token payload", dbError);
@@ -48,11 +58,13 @@ export async function GET(request: Request) {
     }
     
     return NextResponse.json({ 
-      authenticated: true, 
+      authenticated: true,
+      success: true,
       userId: payload.sub, 
       role: payload.role, 
       name,
       imageUrl,
+      store,
     });
   } catch (error) {
     console.error("[Session] Validation error:", error);

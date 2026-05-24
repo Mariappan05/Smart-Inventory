@@ -5,6 +5,7 @@ import { User, Mail, Lock, Save, Eye, EyeOff, BadgeCheck, Building2 } from "luci
 import { fmtDate, fmtDateTime } from "@/utils/dateFormat";
 import toast from "react-hot-toast";
 import { useUserRole } from "@/hooks/useUserRole";
+import { ModernDropdown } from "@/components/ui/ModernDropdown";
 
 type Profile = {
   id: string;
@@ -264,23 +265,21 @@ export function ProfileView() {
               </div>
             </div>
             <div className="space-y-1.5 sm:col-span-2">
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">Store</label>
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-700 dark:bg-slate-950">
-                <Building2 className="h-4 w-4 shrink-0 text-slate-400" />
-                <select
-                  value={storeId}
-                  onChange={(e) => setStoreId(e.target.value)}
-                  disabled={!hasAdminAccess}
-                  className="flex-1 bg-transparent text-sm outline-none dark:text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <option value="">No Store Assigned</option>
-                  {stores.map((store) => (
-                    <option key={store.id} value={store.id}>
-                      {store.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <ModernDropdown
+                label="Store"
+                disabled={!hasAdminAccess}
+                options={[
+                  { value: "", label: "No Store Assigned" },
+                  ...stores.map((store) => ({
+                    value: store.id,
+                    label: store.name,
+                  })),
+                ]}
+                value={storeId}
+                onChange={(value) => setStoreId(value as string)}
+                placeholder="Select store..."
+                searchPlaceholder="Search stores..."
+              />
               {!hasAdminAccess && (
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   Only Admin can change store assignment

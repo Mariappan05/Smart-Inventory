@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { Loader2, Plus, Trash2, Edit2, Check } from "lucide-react";
 import toast from "react-hot-toast";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { formatDate, formatDateTime } from "@/utils/dateTimeFormat";
 
 interface Store {
   id: string;
@@ -250,6 +252,12 @@ export default function NewProductPage() {
     }
   };
 
+  const storeOptions = stores.map((store) => ({
+    value: store.id,
+    label: store.name,
+    subtitle: `Code: ${store.code}`,
+  }));
+
   const handleStoreSelect = (storeId: string) => {
     const selectedStore = stores.find((s) => s.id === storeId);
     if (selectedStore) {
@@ -458,28 +466,20 @@ export default function NewProductPage() {
 
           <div className="space-y-6">
             {/* Store Selection */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Store <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={form.storeId}
-                onChange={(e) => handleStoreSelect(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-              >
-                <option value="">Select a store...</option>
-                {stores.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name} ({store.code})
-                  </option>
-                ))}
-              </select>
-              {form.storeId && (
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                  Selected: <span className="font-semibold">{form.storeName}</span>
-                </p>
-              )}
-            </div>
+            <SearchableSelect
+              label="Store"
+              required
+              options={storeOptions}
+              value={form.storeId}
+              onChange={handleStoreSelect}
+              placeholder="Select a store..."
+              searchPlaceholder="Search stores..."
+            />
+            {form.storeId && (
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                Selected: <span className="font-semibold">{form.storeName}</span>
+              </p>
+            )}
 
             {/* Customer Name */}
             <div>
@@ -753,11 +753,7 @@ export default function NewProductPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
-                      {new Date(product.createdAt).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
+                      {formatDate(product.createdAt)}
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <div className="flex items-center gap-2">

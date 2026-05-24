@@ -5,6 +5,7 @@ import { Plus, X, Loader2, Upload, User, Eye, EyeOff, Trash2, Edit2 } from "luci
 import { fmtDate } from "@/utils/dateFormat";
 import toast from "react-hot-toast";
 import { useUserRole } from "@/hooks/useUserRole";
+import { ModernDropdown } from "@/components/ui/ModernDropdown";
 
 type Store = {
   id: string;
@@ -345,21 +346,23 @@ export function UsersView({ initialUsers, stores }: UsersViewProps) {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Role <span className="text-rose-500">*</span>
-                </label>
-                <select
+                <ModernDropdown
+                  label="Role"
+                  required
+                  searchable={false}
+                  clearable={false}
+                  options={[
+                    { value: "ADMIN", label: "Admin" },
+                    { value: "ADMIN_MANAGER", label: "Admin Manager" },
+                    { value: "STORE_MANAGER", label: "Store Manager" },
+                    { value: "SUB_STORE_LOGIN", label: "Sub Store" },
+                    { value: "INWARD_PERSON", label: "Inward Person" },
+                    { value: "OUTWARD_PERSON", label: "Outward Person" },
+                  ]}
                   value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-slate-400"
-                >
-                  <option value="ADMIN">Admin</option>
-                  <option value="ADMIN_MANAGER">Admin Manager</option>
-                  <option value="STORE_MANAGER">Store Manager</option>
-                  <option value="SUB_STORE_LOGIN">Sub Store</option>
-                  <option value="INWARD_PERSON">Inward Person</option>
-                  <option value="OUTWARD_PERSON">Outward Person</option>
-                </select>
+                  onChange={(value) => setForm({ ...form, role: value as string })}
+                  placeholder="Select role..."
+                />
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   ID auto-generated based on role
                 </p>
@@ -411,50 +414,25 @@ export function UsersView({ initialUsers, stores }: UsersViewProps) {
                 </div>
               </div>
 
-              {!["ADMIN", "ADMIN_MANAGER"].includes(form.role) && (
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Store <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    value={form.storeId}
-                    onChange={(e) => setForm({ ...form, storeId: e.target.value })}
-                    required
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-slate-400"
-                  >
-                    <option value="">Select Store</option>
-                    {stores.map((store) => (
-                      <option key={store.id} value={store.id}>
-                        {store.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {["ADMIN", "ADMIN_MANAGER"].includes(form.role) && (
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Store <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    value={form.storeId}
-                    onChange={(e) => setForm({ ...form, storeId: e.target.value })}
-                    required
-                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-slate-400"
-                  >
-                    <option value="">Select Store</option>
-                    {stores.map((store) => (
-                      <option key={store.id} value={store.id}>
-                        {store.name}
-                      </option>
-                    ))}
-                  </select>
+              <div>
+                <ModernDropdown
+                  label="Store"
+                  required
+                  options={stores.map((store) => ({
+                    value: store.id,
+                    label: store.name,
+                  }))}
+                  value={form.storeId}
+                  onChange={(value) => setForm({ ...form, storeId: value as string })}
+                  placeholder="Select store..."
+                  searchPlaceholder="Search stores..."
+                />
+                {["ADMIN", "ADMIN_MANAGER"].includes(form.role) && (
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     All users must be assigned to a store
                   </p>
-                </div>
-              )}
+                )}
+              </div>
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Photo</label>
@@ -552,39 +530,38 @@ export function UsersView({ initialUsers, stores }: UsersViewProps) {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Role <span className="text-rose-500">*</span></label>
-                <select
+                <ModernDropdown
+                  label="Role"
+                  required
+                  searchable={false}
+                  clearable={false}
+                  options={[
+                    { value: "ADMIN", label: "Admin" },
+                    { value: "ADMIN_MANAGER", label: "Admin Manager" },
+                    { value: "STORE_MANAGER", label: "Store Manager" },
+                    { value: "SUB_STORE_LOGIN", label: "Sub Store" },
+                    { value: "INWARD_PERSON", label: "Inward Person" },
+                    { value: "OUTWARD_PERSON", label: "Outward Person" },
+                  ]}
                   value={editForm.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-slate-400"
-                >
-                  <option value="">Select Role</option>
-                  <option value="ADMIN">Admin</option>
-                  <option value="ADMIN_MANAGER">Admin Manager</option>
-                  <option value="STORE_MANAGER">Store Manager</option>
-                  <option value="SUB_STORE_LOGIN">Sub Store</option>
-                  <option value="INWARD_PERSON">Inward Person</option>
-                  <option value="OUTWARD_PERSON">Outward Person</option>
-                </select>
+                  onChange={(value) => setEditForm({ ...editForm, role: value as string })}
+                  placeholder="Select role..."
+                />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Store <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={editForm.storeId}
-                  onChange={(e) => setEditForm({ ...editForm, storeId: e.target.value })}
+                <ModernDropdown
+                  label="Store"
                   required
-                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-slate-400"
-                >
-                  <option value="">Select Store</option>
-                  {stores.map((store) => (
-                    <option key={store.id} value={store.id}>
-                      {store.name}
-                    </option>
-                  ))}
-                </select>
+                  options={stores.map((store) => ({
+                    value: store.id,
+                    label: store.name,
+                  }))}
+                  value={editForm.storeId}
+                  onChange={(value) => setEditForm({ ...editForm, storeId: value as string })}
+                  placeholder="Select store..."
+                  searchPlaceholder="Search stores..."
+                />
               </div>
 
               <div>

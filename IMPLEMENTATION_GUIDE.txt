@@ -1,0 +1,212 @@
+DATE TIME FORMAT AND DROPDOWN STANDARDIZATION - IMPLEMENTATION GUIDE
+=====================================================================
+
+COMPLETED CHANGES:
+==================
+
+1. Date/Time Formatting Utilities Created
+   - Location: src/utils/dateTimeFormat.ts
+   - Functions available:
+     * formatDate(date) - Returns DD-MM-YYYY
+     * formatTime(date) - Returns hh:mm AM/PM
+     * formatDateTime(date) - Returns DD-MM-YYYY hh:mm AM/PM
+     * formatDateForInput(date) - Returns YYYY-MM-DD (for input fields)
+     * getRelativeTime(date) - Returns "2 hours ago", etc.
+
+2. SearchableSelect Component Enhanced
+   - Location: src/components/ui/SearchableSelect.tsx
+   - Features added:
+     * Keyboard navigation (Arrow Up/Down, Enter, Escape)
+     * Auto-focus on search input when opened
+     * Smooth scrolling to highlighted option
+     * Better animations and transitions
+     * Improved spacing and visual design
+     * Enhanced hover and selection states
+
+3. Request Page Updated
+   - Date formatting applied to table
+   - SearchableSelect component already in use
+
+HOW TO APPLY ACROSS ALL PAGES:
+===============================
+
+STEP 1: Import Date Formatting Functions
+-----------------------------------------
+Add this import to any component that displays dates:
+
+import { formatDate, formatTime, formatDateTime } from "@/utils/dateTimeFormat";
+
+STEP 2: Replace Date Display
+-----------------------------
+Replace any date display with formatted version:
+
+BEFORE:
+  {item.createdAt}
+  {new Date(item.createdAt).toLocaleDateString()}
+
+AFTER:
+  {formatDate(item.createdAt)}
+  {formatDateTime(item.createdAt)}  // if you need time too
+
+STEP 3: Replace Dropdowns with SearchableSelect
+------------------------------------------------
+Replace standard select elements with SearchableSelect:
+
+BEFORE:
+  <select value={value} onChange={(e) => setValue(e.target.value)}>
+    <option value="">Select...</option>
+    {items.map(item => (
+      <option key={item.id} value={item.id}>{item.name}</option>
+    ))}
+  </select>
+
+AFTER:
+  import { SearchableSelect } from "@/components/ui/SearchableSelect";
+
+  const options = items.map(item => ({
+    value: item.id,
+    label: item.name,
+    subtitle: item.code || item.description  // optional
+  }));
+
+  <SearchableSelect
+    label="Select Item"
+    required
+    options={options}
+    value={value}
+    onChange={setValue}
+    placeholder="Select an item..."
+    searchPlaceholder="Search items..."
+  />
+
+PAGES TO UPDATE:
+================
+
+Priority 1 - High Traffic Pages:
+---------------------------------
+1. Dashboard (src/views/dashboard/)
+   - Apply formatDateTime to all date/time displays
+   - Update any dropdowns to SearchableSelect
+
+2. Products Page (src/app/products/, src/views/products/)
+   - Format createdAt, updatedAt columns
+   - Replace store, supplier, type dropdowns
+
+3. Tools Page (src/views/tools/)
+   - Already has store dropdown - keep as is
+   - Format date columns in tables
+
+Priority 2 - Data Entry Pages:
+-------------------------------
+4. Monthly Plan (src/views/monthly-plan/)
+   - Format all date displays
+   - Update customer, component dropdowns
+
+5. Inward Page (src/app/inward/)
+   - Format transaction dates
+   - Update store, product dropdowns
+
+6. Outward Page (src/app/outward/)
+   - Format transaction dates
+   - Update store, product dropdowns
+
+7. Production Entry (src/app/production/)
+   - Format entry dates
+   - Update machine, product dropdowns
+
+Priority 3 - Management Pages:
+-------------------------------
+8. Users Page (src/views/users/)
+   - Format lastLoginAt, createdAt
+   - Update role, store dropdowns
+
+9. Stores Page (src/views/stores/)
+   - Format createdAt, updatedAt
+   - No dropdowns to update
+
+10. Machines Page (src/app/machines/)
+    - Format createdAt, updatedAt
+    - Update store, type, supplier dropdowns
+
+11. Suppliers Page (src/views/suppliers/)
+    - Format createdAt, updatedAt
+    - Update store dropdown
+
+12. Weekly Schedule (src/app/weekly-schedule/)
+    - Format schedule dates
+    - Update all dropdowns
+
+13. Alerts Page (src/views/alerts/)
+    - Format createdAt, resolvedAt
+    - Use formatDateTime for timestamps
+
+EXAMPLE IMPLEMENTATIONS:
+========================
+
+Example 1: Table with Dates
+----------------------------
+<td className="px-6 py-3 text-sm">
+  {formatDate(item.createdAt)}
+</td>
+<td className="px-6 py-3 text-sm">
+  {formatDateTime(item.updatedAt)}
+</td>
+
+Example 2: Store Dropdown
+--------------------------
+const storeOptions = stores.map(store => ({
+  value: store.id,
+  label: store.name,
+  subtitle: `Code: ${store.code}`
+}));
+
+<SearchableSelect
+  label="Store"
+  required
+  options={storeOptions}
+  value={selectedStoreId}
+  onChange={setSelectedStoreId}
+  placeholder="Select a store..."
+  searchPlaceholder="Search stores..."
+/>
+
+Example 3: User Dropdown
+-------------------------
+const userOptions = users.map(user => ({
+  value: user.id,
+  label: user.name,
+  subtitle: `${user.email} - ${user.role}`
+}));
+
+<SearchableSelect
+  label="Assign To"
+  options={userOptions}
+  value={assignedUserId}
+  onChange={setAssignedUserId}
+  placeholder="Select user..."
+  searchPlaceholder="Search users..."
+/>
+
+TESTING CHECKLIST:
+==================
+After updating each page, verify:
+- [ ] All dates display as DD-MM-YYYY
+- [ ] All times display as hh:mm AM/PM
+- [ ] Dropdowns have search functionality
+- [ ] Keyboard navigation works (Arrow keys, Enter, Escape)
+- [ ] Dropdown closes when clicking outside
+- [ ] Selected value is highlighted
+- [ ] Clear button (X) works
+- [ ] Responsive on mobile devices
+- [ ] Dark mode works correctly
+
+BENEFITS:
+=========
+1. Consistent date/time format across entire application
+2. Better user experience with searchable dropdowns
+3. Keyboard accessibility
+4. Improved mobile responsiveness
+5. Professional and polished UI
+6. Easier maintenance with reusable components
+
+All changes maintain existing functionality while improving UX.
