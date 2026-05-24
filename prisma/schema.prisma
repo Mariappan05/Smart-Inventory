@@ -134,6 +134,7 @@ model Store {
   id            String               @id @default(cuid())
   name          String               @unique @db.VarChar(120)
   code          String               @unique @db.VarChar(10)
+  isDefault     Boolean              @default(false)
   createdById   String?
   createdBy     User?                @relation("StoreCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt     DateTime             @default(now())
@@ -417,24 +418,65 @@ model Notification {
 }
 
 model ToolRequest {
-  id                 String   @id @default(cuid())
-  toolName           String   @db.VarChar(160)
-  componentName      String   @db.VarChar(160)
-  componentCode      String   @db.VarChar(100)
+  id                 String        @id @default(cuid())
+  toolName           String        @db.VarChar(160)
+  componentName      String        @db.VarChar(160)
+  componentCode      String        @db.VarChar(100)
   productionQuantity Int
   fromDate           DateTime
   toDate             DateTime
-  machineNumber      String   @db.VarChar(100)
-  machineCode        String   @db.VarChar(100)
-  storeCode          String   @db.VarChar(10)
-  storeName          String   @db.VarChar(120)
+  machineNumber      String        @db.VarChar(100)
+  machineCode        String        @db.VarChar(100)
+  storeCode          String        @db.VarChar(10)
+  storeName          String        @db.VarChar(120)
+  targetStoreId      String?
+  status             RequestStatus @default(PENDING)
   createdById        String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   @@index([storeCode])
+  @@index([targetStoreId])
+  @@index([status])
   @@index([createdById])
   @@index([fromDate])
+  @@index([createdAt])
+}
+
+model SupplierPO {
+  id              String   @id @default(cuid())
+  poNumber        String   @unique @db.VarChar(100)
+  supplierName    String   @db.VarChar(160)
+  supplierCode    String   @db.VarChar(100)
+  pdfUrl          String?  @db.VarChar(500)
+  pdfFileName     String?  @db.VarChar(255)
+  totalAmount     Float?
+  notes           String?  @db.Text
+  createdById     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([poNumber])
+  @@index([supplierCode])
+  @@index([createdAt])
+}
+
+model InwardEntry {
+  id              String   @id @default(cuid())
+  poNumber        String?  @db.VarChar(100)
+  invoiceNumber   String?  @db.VarChar(100)
+  invoiceDate     String?  @db.VarChar(50)
+  productDetails  Json
+  qrCode          String?  @db.Text
+  barcode         String?  @db.VarChar(200)
+  storeId         String?
+  createdById     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([poNumber])
+  @@index([invoiceNumber])
+  @@index([storeId])
   @@index([createdAt])
 }
 
@@ -494,4 +536,12 @@ enum NotificationType {
   order_completed
   order_delivered
   order_closed
+  request_received
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
 }

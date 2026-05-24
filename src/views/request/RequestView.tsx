@@ -39,8 +39,15 @@ interface UserStore {
   name: string;
 }
 
+interface DefaultStore {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export function RequestView() {
   const [userStore, setUserStore] = useState<UserStore | null>(null);
+  const [defaultStore, setDefaultStore] = useState<DefaultStore | null>(null);
   const [components, setComponents] = useState<Component[]>([]);
   const [tools, setTools] = useState<Tool[]>([]);
   const [requests, setRequests] = useState<RequestItem[]>([]);
@@ -62,6 +69,7 @@ export function RequestView() {
 
   useEffect(() => {
     fetchUserStore();
+    fetchDefaultStore();
   }, []);
 
   useEffect(() => {
@@ -94,6 +102,22 @@ export function RequestView() {
     } catch (error) {
       console.error("Error fetching user store:", error);
       toast.error("Failed to fetch user store");
+    }
+  };
+
+  const fetchDefaultStore = async () => {
+    try {
+      const res = await fetch("/api/stores/default");
+      const data = await res.json();
+      if (data.success && data.data) {
+        setDefaultStore({
+          id: data.data.id,
+          code: data.data.code,
+          name: data.data.name,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching default store:", error);
     }
   };
 
@@ -236,6 +260,7 @@ export function RequestView() {
           machineCode: form.machineCode,
           storeCode: userStore?.code || "",
           storeName: userStore?.name || "",
+          targetStoreId: defaultStore?.id || null,
         }),
       });
 
@@ -304,16 +329,23 @@ export function RequestView() {
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           Submit and manage machine component requests
         </p>
+        {defaultStore && (
+          <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+            <p className="text-sm text-blue-900 dark:text-blue-100">
+              <span className="font-semibold">Requests will be routed to:</span> {defaultStore.name} ({defaultStore.code})
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Form Section */}
       <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {/* Store Code - Auto-populated */}
+            {/* From Store Code - Auto-populated */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Store Code
+                From Store Code
               </label>
               <input
                 type="text"
@@ -323,14 +355,40 @@ export function RequestView() {
               />
             </div>
 
-            {/* Store Name - Auto-populated */}
+            {/* From Store Name - Auto-populated */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                Store Name
+                From Store Name
               </label>
               <input
                 type="text"
                 value={userStore?.name || ""}
+                disabled
+                className="w-full rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-white disabled:opacity-50"
+              />
+            </div>
+
+            {/* To Store Code - Default Store */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                To Store Code (Default/Main Store)
+              </label>
+              <input
+                type="text"
+                value={defaultStore?.code || ""}
+                disabled
+                className="w-full rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-white disabled:opacity-50"
+              />
+            </div>
+
+            {/* To Store Name - Default Store */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                To Store Name (Default/Main Store)
+              </label>
+              <input
+                type="text"
+                value={defaultStore?.name || ""}
                 disabled
                 className="w-full rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-white disabled:opacity-50"
               />

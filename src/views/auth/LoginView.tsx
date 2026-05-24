@@ -110,7 +110,7 @@ export function LoginView() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-slate-950 dark:hover:bg-black"
           >
             {submitting ? "Signing in..." : "Sign in"}
           </button>

@@ -332,7 +332,7 @@ export const MultiImageUploadField: React.FC<MultiImageUploadFieldProps> = ({
                   <div className="flex gap-3 justify-center">
                     <button
                       onClick={retakePhoto}
-                      className="px-6 py-3 bg-slate-500 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-md"
+                      className="px-6 py-3 bg-black hover:bg-slate-900 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-md dark:bg-slate-950 dark:hover:bg-black"
                       type="button"
                     >
                       <Camera size={20} />
@@ -340,7 +340,7 @@ export const MultiImageUploadField: React.FC<MultiImageUploadFieldProps> = ({
                     </button>
                     <button
                       onClick={confirmCapture}
-                      className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-md"
+                      className="px-6 py-3 bg-black hover:bg-slate-900 text-white rounded-lg font-medium transition-colors flex items-center gap-2 shadow-md dark:bg-slate-950 dark:hover:bg-black"
                       type="button"
                     >
                       <Check size={20} />
@@ -372,7 +372,7 @@ export const MultiImageUploadField: React.FC<MultiImageUploadFieldProps> = ({
                     <button
                       onClick={stopCamera}
                       disabled={disabled}
-                      className="px-6 py-3 bg-slate-500 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md"
+                      className="px-6 py-3 bg-black hover:bg-slate-900 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md dark:bg-slate-950 dark:hover:bg-black"
                       type="button"
                     >
                       <X size={20} />
@@ -381,7 +381,7 @@ export const MultiImageUploadField: React.FC<MultiImageUploadFieldProps> = ({
                     <button
                       onClick={capturePhoto}
                       disabled={disabled || isLoading}
-                      className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md text-lg"
+                      className="px-8 py-3 bg-black hover:bg-slate-900 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md text-lg dark:bg-slate-950 dark:hover:bg-black"
                       type="button"
                     >
                       <Camera size={24} />

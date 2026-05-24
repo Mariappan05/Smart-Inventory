@@ -8,6 +8,7 @@ interface Store {
   id: string;
   name: string;
   code: string;
+  isDefault?: boolean;
   createdAt: Date;
   updatedAt: Date;
   users: Array<{ id: string; name: string }>;
@@ -26,6 +27,9 @@ export function StoresManagementView({ stores: initialStores, userRole, initialS
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [settingDefault, setSettingDefault] = useState(false);
+  const [editingDefaultStore, setEditingDefaultStore] = useState(false);
+  const [selectedDefaultStore, setSelectedDefaultStore] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     code: initialStoreCode,
@@ -125,6 +129,31 @@ export function StoresManagementView({ stores: initialStores, userRole, initialS
     }
   };
 
+  const handleSetDefault = async (storeId: string) => {
+    setSettingDefault(true);
+    try {
+      const res = await fetch("/api/stores/default", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storeId }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to set default store");
+      }
+
+      setStores(stores.map(s => ({ ...s, isDefault: s.id === storeId })));
+      setEditingDefaultStore(false);
+      setSelectedDefaultStore(null);
+      toast.success("Default store updated successfully");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to set default store");
+    } finally {
+      setSettingDefault(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -209,6 +238,103 @@ export function StoresManagementView({ stores: initialStores, userRole, initialS
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Default Store Configuration */}
+      {userRole === "ADMIN" && stores.length > 0 && (
+        <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+              Default Store for Application
+            </h2>
+            {!editingDefaultStore && (
+              <button
+                onClick={() => {
+                  setEditingDefaultStore(true);
+                  setSelectedDefaultStore(stores.find(s => s.isDefault)?.id || null);
+                }}
+                className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-white hover:bg-slate-900 transition-colors text-sm dark:bg-slate-950 dark:hover:bg-black"
+              >
+                <Edit2 className="h-4 w-4" />
+                Edit
+              </button>
+            )}
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+            Select the main store that will receive all incoming requests from sub-stores.
+          </p>
+          <div className="space-y-2">
+            {stores.map((store) => (
+              <label
+                key={store.id}
+                className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                  editingDefaultStore
+                    ? "border-slate-200 hover:bg-slate-50 cursor-pointer dark:border-slate-700 dark:hover:bg-slate-700/50"
+                    : "border-slate-200 cursor-default dark:border-slate-700"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="defaultStore"
+                  checked={editingDefaultStore ? selectedDefaultStore === store.id : store.isDefault || false}
+                  onChange={() => {
+                    if (editingDefaultStore) {
+                      setSelectedDefaultStore(store.id);
+                    }
+                  }}
+                  disabled={!editingDefaultStore || settingDefault}
+                  className="h-4 w-4 text-black focus:ring-black dark:text-slate-300"
+                />
+                <div className="flex-1">
+                  <div className="font-medium text-slate-900 dark:text-slate-100">
+                    {store.name}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    Code: {store.code}
+                  </div>
+                </div>
+                {store.isDefault && !editingDefaultStore && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                    Default
+                  </span>
+                )}
+              </label>
+            ))}
+          </div>
+          
+          {editingDefaultStore && (
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => {
+                  if (selectedDefaultStore) {
+                    handleSetDefault(selectedDefaultStore);
+                  }
+                }}
+                disabled={settingDefault || !selectedDefaultStore}
+                className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-white hover:bg-slate-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm dark:bg-slate-950 dark:hover:bg-black"
+              >
+                {settingDefault ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Finalizing...
+                  </>
+                ) : (
+                  "Finalize"
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setEditingDefaultStore(false);
+                  setSelectedDefaultStore(null);
+                }}
+                disabled={settingDefault}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 text-sm dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
       )}
 

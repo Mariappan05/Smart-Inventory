@@ -17,6 +17,7 @@ import {
   Warehouse,
   UserCircle,
   Calendar,
+  Bell,
 } from "lucide-react";
 
 const allNavItems = [
@@ -55,14 +56,14 @@ const allNavItems = [
   // Request - Sub Store, Admin, Store Manager
   { label: "Request", icon: FileText, href: "/request", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"] },
   
+  // Incoming Requests - Admin, Store Manager (of default store)
+  { label: "Incoming Requests", icon: Bell, href: "/incoming-requests", roles: ["ADMIN", "STORE_MANAGER"], showNotification: true },
+  
   // Production Entry - Sub Store, Admin, Store Manager
   { label: "Production Entry", icon: Package, href: "/production", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"] },
   
   // Categories - Admin, Store Manager
   { label: "Categories", icon: Tag, href: "/categories", roles: ["ADMIN", "STORE_MANAGER"] },
-  
-  // Store Rooms - Admin, Store Manager
-  { label: "Store Rooms", icon: Warehouse, href: "/store-rooms", roles: ["ADMIN", "STORE_MANAGER"] },
   
   // Maintenance - Admin, Store Manager
   { label: "Maintenance", icon: Wrench, href: "/maintenance", roles: ["ADMIN", "STORE_MANAGER"] },
@@ -85,22 +86,87 @@ const allNavItems = [
 
 export function Sidebar() {
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userStore, setUserStore] = useState<any>(null);
+  const [defaultStore, setDefaultStore] = useState<any>(null);
+  const [incomingRequestCount, setIncomingRequestCount] = useState(0);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   useEffect(() => {
-    fetch("/api/auth/session")
+    fetch("/api/auth/session?details=true")
       .then(res => res.json())
       .then(data => {
         if (data.role) {
           setUserRole(data.role);
         }
+        if (data.store) {
+          setUserStore(data.store);
+        }
       })
-      .catch(() => setUserRole(null));
+      .catch(() => {
+        setUserRole(null);
+        setUserStore(null);
+      });
   }, []);
 
-  const navItems = allNavItems.filter(item => 
-    userRole && item.roles.includes(userRole)
-  );
+  useEffect(() => {
+    fetch("/api/stores/default")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          setDefaultStore(data.data);
+        }
+      })
+      .catch(() => setDefaultStore(null));
+  }, []);
+
+  useEffect(() => {
+    if (defaultStore?.id && userRole === "ADMIN" && userStore?.id === defaultStore.id) {
+      fetch(`/api/requests/incoming/count?storeId=${defaultStore.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setIncomingRequestCount(data.data.count);
+          }
+        })
+        .catch(() => setIncomingRequestCount(0));
+
+      // Poll for updates every 30 seconds
+      const interval = setInterval(() => {
+        fetch(`/api/requests/incoming/count?storeId=${defaultStore.id}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              setIncomingRequestCount(data.data.count);
+            }
+          })
+          .catch(() => {});
+      }, 30000);
+
+      return () => clearInterval(interval);
+    }
+  }, [defaultStore?.id, userRole, userStore?.id]);
+
+  const navItems = allNavItems.filter(item => {
+    // Check if user has the required role
+    if (!userRole || !item.roles.includes(userRole)) {
+      return false;
+    }
+    
+    // Special check for Incoming Requests - only show for default store admin
+    if (item.label === "Incoming Requests") {
+      // Only show for ADMIN of the default store
+      if (userRole !== "ADMIN") {
+        return false;
+      }
+      // Check if user is associated with the default store
+      if (defaultStore && userStore && userStore.id === defaultStore.id) {
+        return true;
+      }
+      return false;
+    }
+    
+    return true;
+  });
 
   const NavContent = () => (
     <>
@@ -111,16 +177,22 @@ export function Sidebar() {
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Inventory</h1>
       </div>
       <nav className="space-y-3">
-        {navItems.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            onClick={() => setMobileDrawerOpen(false)}
-            className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-900/5 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
-          >
-            <item.icon className="h-4 w-4" />
-            <span>{item.label}</span>
-          </Link>
+        {navItems.map((item: any) => (
+          <div key={item.label} className="relative">
+            <Link
+              href={item.href}
+              onClick={() => setMobileDrawerOpen(false)}
+              className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-900/5 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.label}</span>
+              {item.showNotification && incomingRequestCount > 0 && (
+                <span className="ml-auto flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold">
+                  {incomingRequestCount > 99 ? "99+" : incomingRequestCount}
+                </span>
+              )}
+            </Link>
+          </div>
         ))}
       </nav>
     </>

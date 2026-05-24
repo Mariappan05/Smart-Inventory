@@ -5,9 +5,27 @@ import { requireAuth } from "@/lib/auth/permissions";
 export async function GET(request: NextRequest) {
   const authResult = await requireAuth(request);
   if (authResult instanceof NextResponse) return authResult;
+  const session = authResult;
 
   try {
+    // Get user's store information
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { storeId: true },
+    });
+
+    if (!user?.storeId) {
+      return NextResponse.json(
+        { success: false, error: "User has no store assigned" },
+        { status: 400 }
+      );
+    }
+
+    // Fetch only requests created by users from the same store
     const requests = await prisma.toolRequest.findMany({
+      where: {
+        createdById: session.userId,
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -39,6 +57,7 @@ export async function POST(request: NextRequest) {
       machineCode,
       storeCode,
       storeName,
+      targetStoreId,
     } = body;
 
     const toolRequest = await prisma.toolRequest.create({
@@ -53,6 +72,8 @@ export async function POST(request: NextRequest) {
         machineCode,
         storeCode,
         storeName,
+        targetStoreId,
+        status: "PENDING",
         createdById: session.userId,
       },
     });

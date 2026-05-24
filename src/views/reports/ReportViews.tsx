@@ -101,7 +101,7 @@ export function ReportViews() {
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Date filtering, search, pagination and exports.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => download("excel")} className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white">
+            <button onClick={() => download("excel")} className="inline-flex items-center gap-2 rounded-2xl bg-black px-4 py-3 text-sm font-semibold text-white hover:bg-slate-900 dark:bg-slate-950 dark:hover:bg-black">
               <Download className="h-4 w-4" /> Excel
             </button>
             <button onClick={() => download("pdf")} className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800">

@@ -639,7 +639,7 @@ export function ToolEntryView({ items }: Props) {
                   subtitle: item.itemCode ? `Code: ${item.itemCode}` : undefined,
                 }))}
                 value={form.itemId}
-                onChange={(value) => setForm({ ...form, itemId: value })}
+                onChange={(value) => setForm({ ...form, itemId: value as string })}
                 placeholder={!form.storeId ? "Select a store first..." : "Select a component..."}
                 searchPlaceholder="Search components..."
                 disabled={!form.storeId}
@@ -861,7 +861,7 @@ export function ToolEntryView({ items }: Props) {
             {selectedPendingIds.size > 0 && (
               <button
                 onClick={handleBulkDeletePending}
-                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 transition-colors font-medium"
+                className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-sm text-white hover:bg-slate-900 transition-colors font-medium dark:bg-slate-950 dark:hover:bg-black"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete Selected ({selectedPendingIds.size})
@@ -974,7 +974,7 @@ export function ToolEntryView({ items }: Props) {
             <button
               onClick={() => setShowBulkDeleteConfirm(true)}
               disabled={submitting}
-              className="inline-flex items-center gap-1 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-xs sm:text-sm disabled:opacity-50"
+              className="inline-flex items-center gap-1 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-black text-white rounded-lg hover:bg-slate-900 transition text-xs sm:text-sm disabled:opacity-50 dark:bg-slate-950 dark:hover:bg-black"
             >
               <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Delete Selected</span>

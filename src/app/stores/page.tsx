@@ -95,6 +95,7 @@ export default async function StoresPage() {
         id: true,
         name: true,
         code: true,
+        isDefault: true,
         createdAt: true,
         updatedAt: true,
         users: {

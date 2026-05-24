@@ -19,7 +19,7 @@ export default function AccessDenied() {
         </p>
         <Link
           href="/"
-          className="inline-block rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+          className="inline-block rounded-lg bg-black px-6 py-3 font-medium text-white transition hover:bg-slate-900 dark:bg-slate-950 dark:hover:bg-black"
         >
           Return to Dashboard
         </Link>

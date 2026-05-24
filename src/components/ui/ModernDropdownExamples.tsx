@@ -6,7 +6,7 @@
  */
 
 import { ModernDropdown } from "@/components/ui/ModernDropdown";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ============================================
 // Example 1: Basic Single Select Dropdown

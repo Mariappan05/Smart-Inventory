@@ -129,7 +129,7 @@ export function ImageGallery({
                   <button
                     onClick={() => handleSetPrimary(image.id)}
                     disabled={loading === image.id}
-                    className="rounded-lg bg-yellow-500 p-2 text-white opacity-0 transition group-hover:opacity-100 hover:bg-yellow-600 disabled:bg-yellow-400"
+                    className="rounded-lg bg-black p-2 text-white opacity-0 transition group-hover:opacity-100 hover:bg-slate-900 disabled:bg-slate-400 dark:bg-slate-950 dark:hover:bg-black"
                     title="Set as primary image"
                   >
                     {loading === image.id ? (
@@ -144,7 +144,7 @@ export function ImageGallery({
                 <button
                   onClick={() => handleDelete(image.id)}
                   disabled={deleting === image.id}
-                  className="rounded-lg bg-red-500 p-2 text-white opacity-0 transition group-hover:opacity-100 hover:bg-red-600 disabled:bg-red-400"
+                  className="rounded-lg bg-black p-2 text-white opacity-0 transition group-hover:opacity-100 hover:bg-slate-900 disabled:bg-slate-400 dark:bg-slate-950 dark:hover:bg-black"
                   title="Delete image"
                 >
                   {deleting === image.id ? (
