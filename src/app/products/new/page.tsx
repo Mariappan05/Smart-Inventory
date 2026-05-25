@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
-import { Loader2, Plus, Trash2, Edit2, Check } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit2, Check, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { formatDate, formatDateTime } from "@/utils/dateTimeFormat";
@@ -40,6 +40,7 @@ export default function NewProductPage() {
   const [stores, setStores] = useState<Store[]>([]);
   const [products, setProducts] = useState<CreatedProduct[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [showCreatedProducts, setShowCreatedProducts] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editProductForm, setEditProductForm] = useState({
     customerName: "",
@@ -637,10 +638,29 @@ export default function NewProductPage() {
         {/* Created Products Table */}
         <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-x-auto">
           <div className="border-b border-slate-200 bg-slate-50 px-6 py-3 dark:border-slate-700 dark:bg-slate-800/50 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Created Products ({products.length})
-            </h2>
-            {selectedProducts.length > 0 && (
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                Created Products ({products.length})
+              </h2>
+              <button
+                onClick={() => setShowCreatedProducts(!showCreatedProducts)}
+                className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium transition-colors"
+                title={showCreatedProducts ? "Hide Created Products" : "View Created Products"}
+              >
+                {showCreatedProducts ? (
+                  <>
+                    <EyeOff className="h-4 w-4" />
+                    Hide Created Products
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-4 w-4" />
+                    View Created Products
+                  </>
+                )}
+              </button>
+            </div>
+            {showCreatedProducts && selectedProducts.length > 0 && (
               <button
                 onClick={handleBulkDelete}
                 disabled={deleting}
@@ -655,6 +675,8 @@ export default function NewProductPage() {
               </button>
             )}
           </div>
+          {showCreatedProducts && (
+            <>
           <table className="w-full">
             <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
               <tr>
@@ -800,6 +822,13 @@ export default function NewProductPage() {
               )}
             </tbody>
           </table>
+            </>
+          )}
+          {!showCreatedProducts && (
+            <div className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+              Click 'View Created Products' to see all products
+            </div>
+          )}
         </div>
       </div>
     </AppShell>

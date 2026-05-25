@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Plus, Loader2, Edit2, Trash2 } from "lucide-react";
+import { X, Plus, Loader2, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { ModernDropdown } from "@/components/ui/ModernDropdown";
-import { formatDate, formatDateTime } from "@/utils/dateTimeFormat";
 
 type Item = {
   id: string;
@@ -44,10 +43,19 @@ type Tool = {
   };
 };
 
+type Supplier = {
+  id: string;
+  name: string;
+  code: string;
+  contactEmail?: string;
+  contactPhone?: string;
+};
+
 type ToolFormData = {
   itemId: string;
   toolName: string;
-  operations: Operation[];
+  operation: Operation;
+  supplierId: string;
   supplierName: string;
   supplierCode: string;
   rate: string;
@@ -70,7 +78,7 @@ interface PendingTool {
   itemId: string;
   itemName: string;
   toolName: string;
-  operations: Operation[];
+  operation: Operation;
   supplierName: string;
   supplierCode: string;
   rate: number;
@@ -78,12 +86,14 @@ interface PendingTool {
 
 export function ToolEntryView({ items }: Props) {
   const [stores, setStores] = useState<Store[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [form, setForm] = useState<ToolFormData & { storeId: string; storeName: string }>({
     storeId: "",
     storeName: "",
     itemId: "",
     toolName: "",
-    operations: [{ name: "", lifeSpan: 0 }],
+    operation: { name: "", lifeSpan: 0 },
+    supplierId: "",
     supplierName: "",
     supplierCode: "",
     rate: "",
@@ -102,7 +112,8 @@ export function ToolEntryView({ items }: Props) {
     id: undefined,
     itemId: "",
     toolName: "",
-    operations: [{ name: "", lifeSpan: 0 }],
+    operation: { name: "", lifeSpan: 0 },
+    supplierId: "",
     supplierName: "",
     supplierCode: "",
     rate: "",
@@ -110,11 +121,13 @@ export function ToolEntryView({ items }: Props) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [showCreatedTools, setShowCreatedTools] = useState(false);
 
-  // Fetch tools
+  // Fetch tools, stores and suppliers
   useEffect(() => {
     fetchTools();
     fetchStores();
+    fetchSuppliers();
   }, []);
 
   const fetchStores = async () => {
@@ -127,6 +140,19 @@ export function ToolEntryView({ items }: Props) {
     } catch (error) {
       console.error("Error fetching stores:", error);
       toast.error("Failed to fetch stores");
+    }
+  };
+
+  const fetchSuppliers = async () => {
+    try {
+      const res = await fetch("/api/suppliers");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setSuppliers(data);
+      }
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
+      toast.error("Failed to fetch suppliers");
     }
   };
 
@@ -164,31 +190,32 @@ export function ToolEntryView({ items }: Props) {
     }
   };
 
-  const addOperation = () => {
-    setForm({
-      ...form,
-      operations: [...form.operations, { name: "", lifeSpan: 0 }],
-    });
-  };
-
-  const removeOperation = (index: number) => {
-    setForm({
-      ...form,
-      operations: form.operations.filter((_, i) => i !== index),
-    });
-  };
-
-  const updateOperation = (index: number, field: "name" | "lifeSpan", value: string | number) => {
-    const newOperations = [...form.operations];
-    if (field === "name") {
-      newOperations[index] = { ...newOperations[index], name: value as string };
-    } else {
-      newOperations[index] = { ...newOperations[index], lifeSpan: parseFloat(value as string) || 0 };
+  // Handle supplier selection and auto-fill code
+  const handleSupplierChange = (supplierId: string) => {
+    const selectedSupplier = suppliers.find(s => s.id === supplierId);
+    if (selectedSupplier) {
+      setForm({
+        ...form,
+        supplierId,
+        supplierName: selectedSupplier.name,
+        supplierCode: selectedSupplier.code,
+      });
     }
-    setForm({
-      ...form,
-      operations: newOperations,
-    });
+  };
+
+  const handleOperationChange = (field: "name" | "lifeSpan", value: string | number) => {
+    if (field === "name") {
+      setForm({
+        ...form,
+        operation: { ...form.operation, name: value as string },
+      });
+    } else {
+      const numValue = parseFloat(value as string) || 0;
+      setForm({
+        ...form,
+        operation: { ...form.operation, lifeSpan: numValue },
+      });
+    }
   };
 
   const handleRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -203,7 +230,8 @@ export function ToolEntryView({ items }: Props) {
       id: tool.id,
       itemId: tool.itemId,
       toolName: tool.toolName,
-      operations: [...tool.operations],
+      operation: tool.operations[0] || { name: "", lifeSpan: 0 },
+      supplierId: "",
       supplierName: tool.supplierName,
       supplierCode: tool.supplierCode,
       rate: tool.rate.toString(),
@@ -216,38 +244,27 @@ export function ToolEntryView({ items }: Props) {
       id: undefined,
       itemId: "",
       toolName: "",
-      operations: [{ name: "", lifeSpan: 0 }],
+      operation: { name: "", lifeSpan: 0 },
+      supplierId: "",
       supplierName: "",
       supplierCode: "",
       rate: "",
     });
   };
 
-  const updateEditOperation = (index: number, field: "name" | "lifeSpan", value: string | number) => {
-    const newOperations = [...editForm.operations];
+  const updateEditOperation = (field: "name" | "lifeSpan", value: string | number) => {
     if (field === "name") {
-      newOperations[index] = { ...newOperations[index], name: value as string };
+      setEditForm({
+        ...editForm,
+        operation: { ...editForm.operation, name: value as string },
+      });
     } else {
-      newOperations[index] = { ...newOperations[index], lifeSpan: parseFloat(value as string) || 0 };
+      const numValue = parseFloat(value as string) || 0;
+      setEditForm({
+        ...editForm,
+        operation: { ...editForm.operation, lifeSpan: numValue },
+      });
     }
-    setEditForm({
-      ...editForm,
-      operations: newOperations,
-    });
-  };
-
-  const removeEditOperation = (index: number) => {
-    setEditForm({
-      ...editForm,
-      operations: editForm.operations.filter((_, i) => i !== index),
-    });
-  };
-
-  const addEditOperation = () => {
-    setEditForm({
-      ...editForm,
-      operations: [...editForm.operations, { name: "", lifeSpan: 0 }],
-    });
   };
 
   const handleEditRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -265,9 +282,8 @@ export function ToolEntryView({ items }: Props) {
       return;
     }
 
-    const validOperations = editForm.operations.filter((op) => op.name.trim() && op.lifeSpan > 0);
-    if (validOperations.length === 0) {
-      toast.error("At least one operation with name and life span is required");
+    if (!editForm.operation.name.trim() || editForm.operation.lifeSpan <= 0) {
+      toast.error("Operation name and life span are required");
       return;
     }
 
@@ -293,7 +309,7 @@ export function ToolEntryView({ items }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           toolName: editForm.toolName.trim(),
-          operations: validOperations,
+          operations: [editForm.operation],
           supplierName: editForm.supplierName.trim(),
           supplierCode: editForm.supplierCode.trim(),
           rate: parseFloat(editForm.rate),
@@ -408,19 +424,13 @@ export function ToolEntryView({ items }: Props) {
       return;
     }
 
-    const validOperations = form.operations.filter((op) => op.name.trim() && op.lifeSpan > 0);
-    if (validOperations.length === 0) {
-      toast.error("At least one operation with name and life span is required");
+    if (!form.operation.name.trim() || form.operation.lifeSpan <= 0) {
+      toast.error("Operation name and life span are required");
       return;
     }
 
-    if (!form.supplierName.trim()) {
-      toast.error("Supplier name is required");
-      return;
-    }
-
-    if (!form.supplierCode.trim()) {
-      toast.error("Supplier code is required");
+    if (!form.supplierId) {
+      toast.error("Supplier is required");
       return;
     }
 
@@ -437,9 +447,9 @@ export function ToolEntryView({ items }: Props) {
       itemId: form.itemId,
       itemName: selectedItem?.name || "Unknown",
       toolName: form.toolName.trim(),
-      operations: validOperations,
-      supplierName: form.supplierName.trim(),
-      supplierCode: form.supplierCode.trim(),
+      operation: form.operation,
+      supplierName: form.supplierName,
+      supplierCode: form.supplierCode,
       rate: parseFloat(form.rate),
     };
 
@@ -460,7 +470,8 @@ export function ToolEntryView({ items }: Props) {
       storeName: form.storeName,
       itemId: "",
       toolName: "",
-      operations: [{ name: "", lifeSpan: 0 }],
+      operation: { name: "", lifeSpan: 0 },
+      supplierId: "",
       supplierName: "",
       supplierCode: "",
       rate: "",
@@ -487,7 +498,7 @@ export function ToolEntryView({ items }: Props) {
               storeId: tool.storeId,
               itemId: tool.itemId,
               toolName: tool.toolName,
-              operations: tool.operations,
+              operations: [tool.operation],
               supplierName: tool.supplierName,
               supplierCode: tool.supplierCode,
               rate: tool.rate,
@@ -530,7 +541,8 @@ export function ToolEntryView({ items }: Props) {
       storeName: tool.storeName,
       itemId: tool.itemId,
       toolName: tool.toolName,
-      operations: [...tool.operations],
+      operation: tool.operation,
+      supplierId: suppliers.find(s => s.name === tool.supplierName)?.id || "",
       supplierName: tool.supplierName,
       supplierCode: tool.supplierCode,
       rate: tool.rate.toString(),
@@ -575,6 +587,14 @@ export function ToolEntryView({ items }: Props) {
     label: store.name,
     subtitle: `Code: ${store.code}`,
   }));
+
+  const supplierOptions = suppliers.map((supplier) => ({
+    value: supplier.id,
+    label: supplier.name,
+    subtitle: `Code: ${supplier.code}`,
+  }));
+
+  const displayedTools = showCreatedTools ? tools : [];
 
   const getStoreName = (tool: Tool) => {
     if (tool.store) {
@@ -662,87 +682,60 @@ export function ToolEntryView({ items }: Props) {
                 />
               </div>
 
-              {/* Operations */}
+              {/* Operation - Single Operation Only */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Operations <span className="text-red-500">*</span>
+                  Operation <span className="text-red-500">*</span>
                 </label>
-                <div className="space-y-3">
-                  {form.operations.map((operation, index) => (
-                    <div key={index} className="flex gap-2">
-                      <div className="flex-1">
-                        <input
-                          type="text"
-                          placeholder={`Operation ${index + 1} (e.g., Roughing)`}
-                          value={operation.name}
-                          onChange={(e) => updateOperation(index, "name", e.target.value)}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          placeholder="Life Span"
-                          value={operation.lifeSpan > 0 ? operation.lifeSpan : ""}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/[^\d.]/g, "");
-                            updateOperation(index, "lifeSpan", val);
-                          }}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                        />
-                      </div>
-                      {form.operations.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeOperation(index)}
-                          className="rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={addOperation}
-                    className="flex items-center gap-2 mt-2 px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-900 transition-colors font-medium"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Operation
-                  </button>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="Operation name (e.g., Roughing)"
+                      value={form.operation.name}
+                      onChange={(e) => handleOperationChange("name", e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="Life Span"
+                      value={form.operation.lifeSpan > 0 ? form.operation.lifeSpan : ""}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^\d.]/g, "");
+                        handleOperationChange("lifeSpan", val);
+                      }}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Supplier Name */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Supplier Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter supplier name"
-                  value={form.supplierName}
-                  onChange={(e) =>
-                    setForm({ ...form, supplierName: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                />
-              </div>
+              {/* Supplier Name - Dropdown */}
+              <ModernDropdown
+                label="Supplier"
+                required
+                options={supplierOptions}
+                value={form.supplierId}
+                onChange={(value) => handleSupplierChange(value as string)}
+                placeholder="Select supplier..."
+                searchPlaceholder="Search suppliers..."
+                emptyMessage={suppliers.length === 0 ? "No suppliers available" : undefined}
+              />
 
-              {/* Supplier Code */}
+              {/* Supplier Code - Auto-filled */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Supplier Code <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="Enter supplier code"
+                  placeholder="Auto-filled from supplier selection"
                   value={form.supplierCode}
-                  onChange={(e) =>
-                    setForm({ ...form, supplierCode: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                  disabled
+                  className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-slate-700 placeholder-slate-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-400 cursor-not-allowed"
                 />
               </div>
 
@@ -780,7 +773,8 @@ export function ToolEntryView({ items }: Props) {
                       storeName: form.storeName,
                       itemId: "",
                       toolName: "",
-                      operations: [{ name: "", lifeSpan: 0 }],
+                      operation: { name: "", lifeSpan: 0 },
+                      supplierId: "",
                       supplierName: "",
                       supplierCode: "",
                       rate: "",
@@ -883,7 +877,7 @@ export function ToolEntryView({ items }: Props) {
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Store</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Component</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Tool Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Operations</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Operation</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Supplier</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Code</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Rate</th>
@@ -905,16 +899,9 @@ export function ToolEntryView({ items }: Props) {
                     <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">{tool.itemName}</td>
                     <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">{tool.toolName}</td>
                     <td className="px-6 py-4 text-sm">
-                      <div className="flex flex-wrap gap-1">
-                        {tool.operations.map((op, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-block bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 px-2 py-1 rounded text-xs"
-                          >
-                            {op.name} (LS: {op.lifeSpan})
-                          </span>
-                        ))}
-                      </div>
+                      <span className="inline-block bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 px-2 py-1 rounded text-xs">
+                        {tool.operation.name} (LS: {tool.operation.lifeSpan})
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">{tool.supplierName}</td>
                     <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{tool.supplierCode}</td>
@@ -958,12 +945,28 @@ export function ToolEntryView({ items }: Props) {
         </div>
       )}
 
-      {/* All Tools Table */}
+      {/* All Tools Table with Hide/View Toggle */}
       <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 overflow-hidden">
-        <div className="border-b border-slate-200 bg-slate-50 px-3 sm:px-6 py-3 dark:border-slate-700 dark:bg-slate-800/50">
+        <div className="border-b border-slate-200 bg-slate-50 px-3 sm:px-6 py-3 dark:border-slate-700 dark:bg-slate-800/50 flex justify-between items-center">
           <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
             All Tools
           </h2>
+          <button
+            onClick={() => setShowCreatedTools(!showCreatedTools)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors text-sm font-medium dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+          >
+            {showCreatedTools ? (
+              <>
+                <EyeOff className="h-4 w-4" />
+                Hide Created Tools
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4" />
+                View Created Tools
+              </>
+            )}
+          </button>
         </div>
 
         {selectedIds.size > 0 && (
@@ -983,6 +986,11 @@ export function ToolEntryView({ items }: Props) {
           </div>
         )}
 
+        {!showCreatedTools ? (
+          <div className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+            <p className="text-sm">Click "View Created Tools" to see all tools</p>
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-700/50">
@@ -1107,6 +1115,7 @@ export function ToolEntryView({ items }: Props) {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Edit Tool Modal */}
@@ -1143,52 +1152,31 @@ export function ToolEntryView({ items }: Props) {
               {/* Operations */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Operations <span className="text-red-500">*</span>
+                  Operation <span className="text-red-500">*</span>
                 </label>
-                <div className="space-y-3">
-                  {editForm.operations.map((operation, index) => (
-                    <div key={index} className="flex gap-2">
-                      <div className="flex-1">
-                        <input
-                          type="text"
-                          placeholder={`Operation ${index + 1} (e.g., Roughing)`}
-                          value={operation.name}
-                          onChange={(e) => updateEditOperation(index, "name", e.target.value)}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          placeholder="Life Span"
-                          value={operation.lifeSpan > 0 ? operation.lifeSpan : ""}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/[^\d.]/g, "");
-                            updateEditOperation(index, "lifeSpan", val);
-                          }}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                        />
-                      </div>
-                      {editForm.operations.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeEditOperation(index)}
-                          className="rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={addEditOperation}
-                    className="flex items-center gap-2 mt-2 px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-900 transition-colors font-medium"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Operation
-                  </button>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="Operation name (e.g., Roughing)"
+                      value={editForm.operation.name}
+                      onChange={(e) => updateEditOperation("name", e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="Life Span"
+                      value={editForm.operation.lifeSpan > 0 ? editForm.operation.lifeSpan : ""}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^\d.]/g, "");
+                        updateEditOperation("lifeSpan", val);
+                      }}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1307,7 +1295,7 @@ export function ToolEntryView({ items }: Props) {
 
             <div className="p-6">
               <p className="text-slate-600 dark:text-slate-400 mb-6">
-                Are you sure you want to delete {selectedIds.size} selected tool(s)? This action cannot be undone.
+                Are you sure you want to delete {selectedIds.size} tool(s)? This action cannot be undone.
               </p>
 
               <div className="flex gap-3 justify-end">
@@ -1324,7 +1312,7 @@ export function ToolEntryView({ items }: Props) {
                   className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Delete All
+                  Delete Tools
                 </button>
               </div>
             </div>

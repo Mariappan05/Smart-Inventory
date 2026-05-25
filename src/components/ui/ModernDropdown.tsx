@@ -162,6 +162,8 @@ export function ModernDropdown({
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange(mode === "single" ? "" : []);
+    handleClose();
+    setSearchTerm("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

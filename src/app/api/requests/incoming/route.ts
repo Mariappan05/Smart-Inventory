@@ -43,40 +43,32 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const storeId = searchParams.get("storeId");
+    let storeId = searchParams.get("storeId");
 
+    // If no storeId provided, fetch from user session
     if (!storeId) {
-      return NextResponse.json(
-        { success: false, error: "Store ID is required" },
-        { status: 400 }
-      );
-    }
-
-    // Check if the requested store is the default store
-    const defaultStore = await prisma.store.findFirst({
-      where: { isDefault: true },
-    });
-
-    if (!defaultStore || defaultStore.id !== storeId) {
-      return NextResponse.json(
-        { success: false, error: "Can only access incoming requests for the default store" },
-        { status: 403 }
-      );
-    }
-
-    // For STORE_MANAGER, verify they belong to the default store
-    if (payload.role === "STORE_MANAGER") {
       const user = await prisma.user.findUnique({
         where: { id: payload.sub },
         select: { storeId: true },
       });
 
-      if (user?.storeId !== defaultStore.id) {
-        return NextResponse.json(
-          { success: false, error: "You can only access incoming requests for your store" },
-          { status: 403 }
-        );
-      }
+      storeId = user?.storeId || null;
+    }
+
+    // If still no storeId, get the default store
+    if (!storeId) {
+      const defaultStore = await prisma.store.findFirst({
+        where: { isDefault: true },
+        select: { id: true },
+      });
+      storeId = defaultStore?.id || null;
+    }
+
+    if (!storeId) {
+      return NextResponse.json(
+        { success: false, error: "Unable to determine store" },
+        { status: 400 }
+      );
     }
 
     const requests = await prisma.toolRequest.findMany({
@@ -88,9 +80,34 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Fetch user details for each request
+    const requestsWithUsers = await Promise.all(
+      requests.map(async (request) => {
+        let userName = "System";
+        let userEmail: string | undefined;
+
+        if (request.createdById) {
+          const user = await prisma.user.findUnique({
+            where: { id: request.createdById },
+            select: { name: true, email: true },
+          });
+          if (user) {
+            userName = user.name;
+            userEmail = user.email;
+          }
+        }
+
+        return {
+          ...request,
+          userName,
+          userEmail,
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
-      data: requests,
+      data: requestsWithUsers,
     });
   } catch (error) {
     console.error("Error fetching incoming requests:", error);

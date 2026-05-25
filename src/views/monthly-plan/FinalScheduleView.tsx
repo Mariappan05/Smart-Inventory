@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Edit2, CheckCircle, Trash2 } from "lucide-react";
+import { Loader2, Edit2, CheckCircle, Trash2, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface Schedule {
@@ -23,6 +23,7 @@ export function FinalScheduleView({ refreshKey }: FinalScheduleViewProps) {
   const { toast } = useToast();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showFinalPlans, setShowFinalPlans] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Schedule>>({});
 
@@ -154,7 +155,30 @@ export function FinalScheduleView({ refreshKey }: FinalScheduleViewProps) {
 
       {/* Schedules Table */}
       <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-x-auto">
-        <table className="w-full text-sm">
+        <div className="border-b border-slate-200 bg-slate-50 px-6 py-3 dark:border-slate-700 dark:bg-slate-800/50 flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            Final Plans ({schedules.length})
+          </h2>
+          <button
+            onClick={() => setShowFinalPlans(!showFinalPlans)}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium transition-colors"
+            title={showFinalPlans ? "Hide Final Plans" : "View Final Plans"}
+          >
+            {showFinalPlans ? (
+              <>
+                <EyeOff className="h-4 w-4" />
+                Hide Final Plans
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4" />
+                View Final Plans
+              </>
+            )}
+          </button>
+        </div>
+        {showFinalPlans && (
+          <table className="w-full text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50">
             <tr>
               <th className="px-3 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -294,6 +318,12 @@ export function FinalScheduleView({ refreshKey }: FinalScheduleViewProps) {
             )}
           </tbody>
         </table>
+        )}
+        {!showFinalPlans && (
+          <div className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+            Click 'View Final Plans' to see all plans
+          </div>
+        )}
       </div>
     </div>
   );

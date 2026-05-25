@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, Loader2 } from "lucide-react";
+import { Plus, X, Loader2, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { useUserRole } from "@/hooks/useUserRole";
+import { formatDate } from "@/utils/dateTimeFormat";
 
 type Supplier = {
   id: string;
@@ -12,12 +13,14 @@ type Supplier = {
   contactEmail: string | null;
   contactPhone: string | null;
   address: string | null;
+  createdAt: Date | string;
   _count: { products: number };
 };
 
 export function SuppliersView({ initialSuppliers }: { initialSuppliers: Supplier[] }) {
   const { isAdmin } = useUserRole();
   const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
+  const [showSuppliers, setShowSuppliers] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", code: "", contactEmail: "", contactPhone: "", address: "" });
@@ -53,7 +56,7 @@ export function SuppliersView({ initialSuppliers }: { initialSuppliers: Supplier
   return (
     <>
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Directory</p>
             <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">Suppliers</h1>
@@ -70,33 +73,65 @@ export function SuppliersView({ initialSuppliers }: { initialSuppliers: Supplier
           )}
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-                <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Name</th>
-                <th className="hidden sm:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Code</th>
-                <th className="hidden md:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Contact</th>
-                <th className="hidden lg:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Products</th>
-              </tr>
-            </thead>
-            <tbody>
-              {suppliers.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-3 sm:px-4 py-8 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">No suppliers found</td>
-                </tr>
+        <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+          <div className="border-b border-slate-200 bg-slate-50 px-3 sm:px-6 py-3 dark:border-slate-700 dark:bg-slate-800/50 flex justify-between items-center">
+            <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
+              All Suppliers
+            </h2>
+            <button
+              onClick={() => setShowSuppliers(!showSuppliers)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors text-sm font-medium dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+            >
+              {showSuppliers ? (
+                <>
+                  <EyeOff className="h-4 w-4" />
+                  Hide Suppliers
+                </>
               ) : (
-                suppliers.map((supplier) => (
-                  <tr key={supplier.id} className="border-b border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
-                    <td className="px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm text-slate-900 dark:text-slate-100">{supplier.name}</td>
-                    <td className="hidden sm:table-cell px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{supplier.code}</td>
-                    <td className="hidden md:table-cell px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{supplier.contactEmail || supplier.contactPhone || "-"}</td>
-                    <td className="hidden lg:table-cell px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{supplier._count.products}</td>
-                  </tr>
-                ))
+                <>
+                  <Eye className="h-4 w-4" />
+                  View Suppliers
+                </>
               )}
-            </tbody>
-          </table>
+            </button>
+          </div>
+
+          {!showSuppliers ? (
+            <div className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+              <p className="text-sm">Click "View Suppliers" to see all suppliers</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+                    <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Name</th>
+                    <th className="hidden sm:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Code</th>
+                    <th className="hidden md:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Contact</th>
+                    <th className="hidden lg:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Created Date</th>
+                    <th className="hidden lg:table-cell px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">Products</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {suppliers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-3 sm:px-4 py-8 text-center text-xs sm:text-sm text-slate-500 dark:text-slate-400">No suppliers found</td>
+                    </tr>
+                  ) : (
+                    suppliers.map((supplier) => (
+                      <tr key={supplier.id} className="border-b border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800">
+                        <td className="px-3 sm:px-4 py-3 font-medium text-xs sm:text-sm text-slate-900 dark:text-slate-100">{supplier.name}</td>
+                        <td className="hidden sm:table-cell px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{supplier.code}</td>
+                        <td className="hidden md:table-cell px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{supplier.contactEmail || supplier.contactPhone || "-"}</td>
+                        <td className="hidden lg:table-cell px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{formatDate(new Date(supplier.createdAt))}</td>
+                        <td className="hidden lg:table-cell px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{supplier._count.products}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 

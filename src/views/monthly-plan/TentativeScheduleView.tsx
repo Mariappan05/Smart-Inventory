@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Loader2, Edit2, Trash2 } from "lucide-react";
+import { Plus, Loader2, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { ModernDropdown } from "@/components/ui/ModernDropdown";
 
@@ -83,6 +83,7 @@ export function TentativeScheduleView({ onScheduleCreated }: { onScheduleCreated
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showCreatedPlans, setShowCreatedPlans] = useState(false);
 
   useEffect(() => {
     fetchCustomerNames();
@@ -656,62 +657,86 @@ export function TentativeScheduleView({ onScheduleCreated }: { onScheduleCreated
 
       {/* Created Schedules List */}
       <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-x-auto">
-        <div className="border-b border-slate-200 bg-slate-50 px-6 py-3 dark:border-slate-700 dark:bg-slate-800/50">
+        <div className="border-b border-slate-200 bg-slate-50 px-6 py-3 dark:border-slate-700 dark:bg-slate-800/50 flex justify-between items-center">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             Created Plans ({schedules.length})
           </h2>
-        </div>
-        <table className="w-full">
-          <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Customer
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Items
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Created At
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-            {loading ? (
-              <tr>
-                <td colSpan={3} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading plans...
-                  </div>
-                </td>
-              </tr>
-            ) : schedules.length === 0 ? (
-              <tr>
-                <td colSpan={3} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
-                  No plans created yet
-                </td>
-              </tr>
+          <button
+            onClick={() => setShowCreatedPlans(!showCreatedPlans)}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium transition-colors"
+            title={showCreatedPlans ? "Hide Created Plans" : "View Created Plans"}
+          >
+            {showCreatedPlans ? (
+              <>
+                <EyeOff className="h-4 w-4" />
+                Hide Created Plans
+              </>
             ) : (
-              schedules.map((schedule) => (
-                <tr key={schedule.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
-                  <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
-                    {schedule.customerName}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
-                    {schedule.items?.length || 0} item{schedule.items?.length !== 1 ? "s" : ""}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
-                    {new Date(schedule.createdAt).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
+              <>
+                <Eye className="h-4 w-4" />
+                View Created Plans
+              </>
+            )}
+          </button>
+        </div>
+        {showCreatedPlans && (
+          <table className="w-full">
+            <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+              <tr>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Customer
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Items
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Created At
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              {loading ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading plans...
+                    </div>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : schedules.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                    No plans created yet
+                  </td>
+                </tr>
+              ) : (
+                schedules.map((schedule) => (
+                  <tr key={schedule.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                      {schedule.customerName}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                      {schedule.items?.length || 0} item{schedule.items?.length !== 1 ? "s" : ""}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                      {new Date(schedule.createdAt).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
+        {!showCreatedPlans && (
+          <div className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+            Click 'View Created Plans' to see all plans
+          </div>
+        )}
       </div>
     </div>
   );
