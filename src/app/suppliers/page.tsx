@@ -26,7 +26,7 @@ export default async function SuppliersPage() {
     try {
       const payload = verifyAuthToken(token);
       session = {
-        userId: payload.userId || payload.sub || "",
+        userId: payload.sub || "",
         role: payload.role || "EMPLOYEE",
         storeId: payload.storeId,
       };
