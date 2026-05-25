@@ -128,16 +128,6 @@ export function OutwardView() {
     return `${request.storeName} (${request.storeCode}) - ${request.userName} - ${dateRange}`;
   };
 
-  const searchableFields = (request: IncomingRequest) => {
-    return [
-      request.storeName,
-      request.storeCode,
-      request.userName,
-      formatDate(request.fromDate),
-      formatDate(request.toDate),
-    ].join(" ");
-  };
-
   // Handle request selection
   const handleRequestSelect = (requestId: string | string[]) => {
     // Convert to string and handle array case
@@ -442,10 +432,7 @@ export function OutwardView() {
             value={selectedRequest?.id || ""}
             onChange={handleRequestSelect}
             placeholder="Select an incoming request..."
-            searchableText={(request) => {
-              const req = incomingRequests.find((r) => r.id === request.value);
-              return req ? searchableFields(req) : "";
-            }}
+            searchable={true}
           />
         )}
       </div>
