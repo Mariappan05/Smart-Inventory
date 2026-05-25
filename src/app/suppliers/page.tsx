@@ -28,7 +28,7 @@ export default async function SuppliersPage() {
       session = {
         userId: payload.sub || "",
         role: payload.role || "EMPLOYEE",
-        storeId: payload.storeId,
+        storeId: payload.storeId || undefined,
       };
     } catch {
       session = null;
