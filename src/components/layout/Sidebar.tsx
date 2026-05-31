@@ -41,7 +41,7 @@ const allNavItems = [
   { label: "Suppliers", icon: Tag, href: "/suppliers/new", roles: ["ADMIN", "STORE_MANAGER"] },
   
   // Machines - Admin, Store Manager
-  { label: "Machines", icon: Warehouse, href: "/machines/new", roles: ["ADMIN", "STORE_MANAGER"] },
+  { label: "Machines", icon: Warehouse, href: "/machines", roles: ["ADMIN", "STORE_MANAGER"] },
   
   // Supplier PO - Admin, Store Manager
   { label: "Supplier PO", icon: FileText, href: "/supplier-po", roles: ["ADMIN", "STORE_MANAGER"] },

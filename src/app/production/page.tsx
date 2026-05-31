@@ -3,13 +3,24 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { Eye, EyeOff, Edit2, Trash2 } from 'lucide-react';
+
+interface Store {
+  id: string;
+  name: string;
+  code: string;
+}
 
 interface Production {
   id: string;
   date: string;
-  storeName: string;
-  storeCode: string;
+  storeId?: string;
+  store?: {
+    id: string;
+    name: string;
+    code: string;
+  };
   machineName: string;
   machineCode: string;
   componentName: string;
@@ -24,6 +35,7 @@ interface Production {
 interface TemporaryProduction {
   id: string;
   date: string;
+  storeId: string;
   storeName: string;
   storeCode: string;
   machineName: string;
@@ -47,8 +59,10 @@ interface ApiResponse {
   message?: string;
 }
 
+
 interface FormData {
   date: string;
+  storeId: string;
   storeName: string;
   storeCode: string;
   machineName: string;
@@ -62,6 +76,7 @@ interface FormData {
 
 export default function ProductionPage() {
   const router = useRouter();
+  const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -79,6 +94,7 @@ export default function ProductionPage() {
   // Form state
   const [formData, setFormData] = useState<FormData>({
     date: new Date().toISOString().split('T')[0],
+    storeId: '',
     storeName: '',
     storeCode: '',
     machineName: '',
@@ -100,9 +116,22 @@ export default function ProductionPage() {
   const checkAuthAndLoadData = async () => {
     try {
       const profileRes = await fetch('/api/profile');
-      const profileData = await profileRes.json();
+      if (!profileRes.ok) {
+        router.push('/login');
+        return;
+      }
+      
+      const profileText = await profileRes.text();
+      let profileData;
+      try {
+        profileData = JSON.parse(profileText);
+      } catch (parseErr) {
+        console.error('Failed to parse profile response:', parseErr);
+        router.push('/login');
+        return;
+      }
 
-      if (!profileRes.ok || !profileData.success) {
+      if (!profileData.success) {
         router.push('/login');
         return;
       }
@@ -114,7 +143,7 @@ export default function ProductionPage() {
         return;
       }
 
-      await fetchSavedProductions();
+      await Promise.all([loadStores(), fetchSavedProductions()]);
     } catch (err) {
       console.error('Auth check error:', err);
       setError('Failed to verify authorization');
@@ -122,11 +151,48 @@ export default function ProductionPage() {
     }
   };
 
+  const loadStores = async () => {
+    try {
+      const response = await fetch('/api/stores');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        console.error('Failed to parse stores response:', parseErr);
+        setError('Failed to parse stores data');
+        return;
+      }
+
+      if (data.success && Array.isArray(data.data)) {
+        setStores(data.data);
+      }
+    } catch (err) {
+      console.error('Error loading stores:', err);
+    }
+  };
+
   const fetchSavedProductions = async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/production?page=1&pageSize=50');
-      const data: ApiResponse = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const text = await response.text();
+      let data: ApiResponse;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        console.error('Failed to parse production response:', parseErr);
+        setError('Failed to fetch productions - invalid response format');
+        return;
+      }
 
       if (data.success && data.data) {
         setSavedProductions(data.data.data);
@@ -141,8 +207,20 @@ export default function ProductionPage() {
     }
   };
 
+  const handleStoreSelect = (storeId: string) => {
+    const selectedStore = stores.find(s => s.id === storeId);
+    if (selectedStore) {
+      setFormData({
+        ...formData,
+        storeId: selectedStore.id,
+        storeName: selectedStore.name,
+        storeCode: selectedStore.code,
+      });
+    }
+  };
+
   const handleAddItem = () => {
-    if (!formData.storeName || !formData.machineName || !formData.componentName || 
+    if (!formData.storeId || !formData.machineName || !formData.componentName || 
         !formData.operation || !formData.toolName || !formData.productionQuantity) {
       setError('All fields are required');
       return;
@@ -151,6 +229,7 @@ export default function ProductionPage() {
     const newItem: TemporaryProduction = {
       id: Date.now().toString(),
       date: formData.date,
+      storeId: formData.storeId,
       storeName: formData.storeName,
       storeCode: formData.storeCode,
       machineName: formData.machineName,
@@ -165,6 +244,7 @@ export default function ProductionPage() {
     setTempProductions([...tempProductions, newItem]);
     setFormData({
       date: new Date().toISOString().split('T')[0],
+      storeId: '',
       storeName: '',
       storeCode: '',
       machineName: '',
@@ -183,6 +263,7 @@ export default function ProductionPage() {
     if (item) {
       setFormData({
         date: item.date,
+        storeId: item.storeId,
         storeName: item.storeName,
         storeCode: item.storeCode,
         machineName: item.machineName,
@@ -204,6 +285,7 @@ export default function ProductionPage() {
           ? {
               ...p,
               date: formData.date,
+              storeId: formData.storeId,
               storeName: formData.storeName,
               storeCode: formData.storeCode,
               machineName: formData.machineName,
@@ -219,6 +301,7 @@ export default function ProductionPage() {
       setEditingTempId(null);
       setFormData({
         date: new Date().toISOString().split('T')[0],
+        storeId: '',
         storeName: '',
         storeCode: '',
         machineName: '',
@@ -252,8 +335,7 @@ export default function ProductionPage() {
         body: JSON.stringify({
           productions: tempProductions.map(p => ({
             date: p.date,
-            storeName: p.storeName,
-            storeCode: p.storeCode,
+            storeId: p.storeId,
             machineName: p.machineName,
             machineCode: p.machineCode,
             componentName: p.componentName,
@@ -265,13 +347,26 @@ export default function ProductionPage() {
         }),
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        console.error('Failed to parse create response:', parseErr);
+        setError('Failed to create production records - invalid response');
+        return;
+      }
 
       if (data.success) {
         setSuccessMessage('All production records created successfully!');
         setTempProductions([]);
         setFormData({
           date: new Date().toISOString().split('T')[0],
+          storeId: '',
           storeName: '',
           storeCode: '',
           machineName: '',
@@ -319,7 +414,7 @@ export default function ProductionPage() {
   };
 
   const filteredSavedProductions = savedProductions.filter(production =>
-    production.storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (production.store?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     production.machineName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     production.componentName.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -346,9 +441,15 @@ export default function ProductionPage() {
     );
   }
 
+  const storeOptions = stores.map(store => ({
+    value: store.id,
+    label: store.name,
+    subtitle: `Code: ${store.code}`,
+  }));
+
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="w-full px-4 py-8 sm:px-6 lg:px-8">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Production Entry</h1>
@@ -373,10 +474,11 @@ export default function ProductionPage() {
         <div className="mb-8 rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
           <h2 className="mb-6 text-lg font-semibold text-slate-900 dark:text-white">Add Production Record</h2>
           
-          <div className="grid gap-4 sm:grid-cols-2 mb-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+            {/* Date */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Date *
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Date <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -386,35 +488,35 @@ export default function ProductionPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Store Name *
-              </label>
-              <input
-                type="text"
-                value={formData.storeName}
-                onChange={(e) => setFormData({...formData, storeName: e.target.value})}
-                placeholder="Enter store name"
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-              />
-            </div>
+            {/* Store Dropdown */}
+            <SearchableSelect
+              label="Store"
+              required
+              options={storeOptions}
+              value={formData.storeId}
+              onChange={(value) => handleStoreSelect(value)}
+              placeholder="Select a store..."
+              searchPlaceholder="Search stores..."
+              disabled={stores.length === 0}
+            />
 
+            {/* Store Code (Auto-filled) */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Store Code *
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Store Code
               </label>
               <input
                 type="text"
                 value={formData.storeCode}
-                onChange={(e) => setFormData({...formData, storeCode: e.target.value})}
-                placeholder="Enter store code"
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                disabled
+                className="w-full rounded-lg border border-slate-300 bg-slate-100 px-4 py-2.5 text-slate-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-400"
               />
             </div>
 
+            {/* Machine Name */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Machine Name *
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Machine Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -425,9 +527,10 @@ export default function ProductionPage() {
               />
             </div>
 
+            {/* Machine Code */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Machine Code *
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Machine Code <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -438,9 +541,10 @@ export default function ProductionPage() {
               />
             </div>
 
+            {/* Component Name */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Component Name *
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Component Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -451,9 +555,10 @@ export default function ProductionPage() {
               />
             </div>
 
+            {/* Component Code */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Component Code *
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Component Code <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -464,9 +569,10 @@ export default function ProductionPage() {
               />
             </div>
 
+            {/* Operation */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Operation *
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Operation <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -477,9 +583,10 @@ export default function ProductionPage() {
               />
             </div>
 
+            {/* Tool Name */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Tool Name *
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Tool Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -490,9 +597,10 @@ export default function ProductionPage() {
               />
             </div>
 
+            {/* Production Quantity */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Production Quantity *
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Production Quantity <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -596,7 +704,7 @@ export default function ProductionPage() {
             {/* Hide/View Button */}
             <button
               onClick={() => setShowSavedTable(!showSavedTable)}
-              className="mb-4 inline-flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white"
+              className="mb-4 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-900 hover:bg-slate-50 transition-colors dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
             >
               {showSavedTable ? <EyeOff size={20} /> : <Eye size={20} />}
               {showSavedTable ? 'Hide Saved Records' : 'View Saved Records'}
@@ -620,19 +728,23 @@ export default function ProductionPage() {
                       <thead>
                         <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
                           <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Date</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Store</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Machine</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Component</th>
+                          <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Store Name</th>
+                          <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Store Code</th>
+                          <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Machine Name</th>
+                          <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Machine Code</th>
+                          <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Component Name</th>
+                          <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Component Code</th>
                           <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Operation</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Tool</th>
+                          <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Tool Name</th>
                           <th className="px-4 py-3 text-center font-semibold text-slate-900 dark:text-white">Qty</th>
+                          <th className="px-4 py-3 text-left font-semibold text-slate-900 dark:text-white">Created Date</th>
                           <th className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                         {filteredSavedProductions.length === 0 ? (
                           <tr>
-                            <td colSpan={8} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
+                            <td colSpan={12} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                               {searchTerm ? 'No records match your search.' : 'No saved records.'}
                             </td>
                           </tr>
@@ -643,20 +755,61 @@ export default function ProductionPage() {
                               className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                             >
                               <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{new Date(prod.date).toLocaleDateString()}</td>
-                              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{prod.storeName} ({prod.storeCode})</td>
+                              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{prod.store?.name || 'N/A'}</td>
+                              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                                <code className="rounded bg-slate-100 px-2 py-1 font-mono dark:bg-slate-800">
+                                  {prod.store?.code || 'N/A'}
+                                </code>
+                              </td>
                               <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{prod.machineName}</td>
+                              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                                <code className="rounded bg-slate-100 px-2 py-1 font-mono dark:bg-slate-800">
+                                  {prod.machineCode}
+                                </code>
+                              </td>
                               <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{prod.componentName}</td>
+                              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                                <code className="rounded bg-slate-100 px-2 py-1 font-mono dark:bg-slate-800">
+                                  {prod.componentCode}
+                                </code>
+                              </td>
                               <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{prod.operation}</td>
                               <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{prod.toolName}</td>
                               <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-300">{prod.productionQuantity}</td>
+                              <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{new Date(prod.createdAt).toLocaleDateString()}</td>
                               <td className="px-4 py-3 text-right">
-                                <button
-                                  onClick={() => setDeleteId(prod.id)}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-950"
-                                >
-                                  <Trash2 size={14} />
-                                  Delete
-                                </button>
+                                <div className="inline-flex items-center gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setFormData({
+                                        date: prod.date,
+                                        storeId: prod.storeId || '',
+                                        storeName: prod.store?.name || '',
+                                        storeCode: prod.store?.code || '',
+                                        machineName: prod.machineName,
+                                        machineCode: prod.machineCode,
+                                        componentName: prod.componentName,
+                                        componentCode: prod.componentCode,
+                                        operation: prod.operation,
+                                        toolName: prod.toolName,
+                                        productionQuantity: prod.productionQuantity.toString(),
+                                      });
+                                      setShowSavedTable(false);
+                                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }}
+                                    className="inline-flex items-center gap-1 rounded-lg border border-blue-300 px-2 py-1 text-xs text-blue-700 hover:bg-blue-50 dark:border-blue-600 dark:text-blue-300 dark:hover:bg-blue-950"
+                                  >
+                                    <Edit2 size={14} />
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => setDeleteId(prod.id)}
+                                    className="inline-flex items-center gap-1 rounded-lg border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-950"
+                                  >
+                                    <Trash2 size={14} />
+                                    Delete
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))

@@ -51,7 +51,6 @@ export const moduleAccess: Record<string, UserRole[]> = {
   
   // Machines - Admin, Store Manager 
   "/machines": ["ADMIN", "STORE_MANAGER"],
-  "/machines/new": ["ADMIN", "STORE_MANAGER"],
   
   // QR Code - Store Manager, Admin
   "/qr": ["ADMIN", "STORE_MANAGER"],
@@ -111,7 +110,6 @@ export const rolePermissions: Record<UserRole, string[]> = {
     "/tools/new",
     "/tools",
     "/suppliers/new",
-    "/machines/new",
     "/qr",
     "/products/request",
     "/request",

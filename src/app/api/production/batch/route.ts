@@ -25,7 +25,8 @@ export async function POST(request: NextRequest) {
           data: {
             date: new Date(prod.date),
             storeId: prod.storeId,
-            machineId: prod.machineId,
+            machineName: prod.machineName,
+            machineCode: prod.machineCode,
             componentName: prod.componentName,
             componentCode: prod.componentCode,
             operation: prod.operation,
@@ -43,18 +44,14 @@ export async function POST(request: NextRequest) {
                 code: true,
               },
             },
-            machine: {
-              select: {
-                id: true,
-                name: true,
-                code: true,
-              },
-            },
+            machineName: true,
+            machineCode: true,
             componentName: true,
             componentCode: true,
             operation: true,
             toolName: true,
             productionQuantity: true,
+            createdAt: true,
           },
         })
       )

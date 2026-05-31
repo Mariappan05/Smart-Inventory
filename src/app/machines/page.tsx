@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { Eye, EyeOff, Edit2, Trash2 } from 'lucide-react';
 
 interface Machine {
@@ -321,6 +322,12 @@ export default function MachinesPage() {
     );
   }
 
+  const storeOptions = stores.map(store => ({
+    value: store.id,
+    label: store.name,
+    subtitle: `Code: ${store.code}`,
+  }));
+
   return (
     <AppShell>
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -350,23 +357,16 @@ export default function MachinesPage() {
           
           <div className="grid gap-4 sm:grid-cols-2 mb-6">
             {/* Store Dropdown */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Store *
-              </label>
-              <select
-                value={formData.storeId}
-                onChange={(e) => handleStoreSelect(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 focus:border-slate-500 focus:ring-2 focus:ring-slate-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-              >
-                <option value="">Select a store...</option>
-                {stores.map(store => (
-                  <option key={store.id} value={store.id}>
-                    {store.name} ({store.code})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SearchableSelect
+              label="Store"
+              required
+              options={storeOptions}
+              value={formData.storeId}
+              onChange={(value) => handleStoreSelect(value)}
+              placeholder="Select a store..."
+              searchPlaceholder="Search stores..."
+              disabled={stores.length === 0}
+            />
 
             {/* Store Code (Auto-filled) */}
             <div>
@@ -508,7 +508,7 @@ export default function MachinesPage() {
             {/* Hide/View Button */}
             <button
               onClick={() => setShowSavedTable(!showSavedTable)}
-              className="mb-4 inline-flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white"
+              className="mb-4 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-900 hover:bg-slate-50 transition-colors dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
             >
               {showSavedTable ? <EyeOff size={20} /> : <Eye size={20} />}
               {showSavedTable ? 'Hide Saved Machines' : 'View Saved Machines'}
@@ -531,16 +531,19 @@ export default function MachinesPage() {
                     <thead>
                       <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
                         <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">
+                          Store Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">
+                          Store Code
+                        </th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">
                           Machine Name
                         </th>
                         <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">
-                          Code
+                          Machine Code
                         </th>
                         <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">
-                          Store
-                        </th>
-                        <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-white">
-                          Created
+                          Created Date
                         </th>
                         <th className="px-6 py-3 text-right text-sm font-semibold text-slate-900 dark:text-white">
                           Actions
@@ -550,7 +553,7 @@ export default function MachinesPage() {
                     <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                       {filteredSavedMachines.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                          <td colSpan={6} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                             {searchTerm ? 'No machines match your search.' : 'No saved machines.'}
                           </td>
                         </tr>
@@ -560,6 +563,14 @@ export default function MachinesPage() {
                             key={machine.id}
                             className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                           >
+                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                              {machine.store?.name || 'Unknown'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                              <code className="rounded bg-slate-100 px-2 py-1 font-mono dark:bg-slate-800">
+                                {machine.store?.code || 'N/A'}
+                              </code>
+                            </td>
                             <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">
                               {machine.name}
                             </td>
@@ -569,12 +580,25 @@ export default function MachinesPage() {
                               </code>
                             </td>
                             <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
-                              {machine.store?.name || 'Unknown'}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
                               {new Date(machine.createdAt).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 text-right text-sm">
+                            <td className="px-6 py-4 text-right text-sm space-x-2">
+                              <button
+                                onClick={() => {
+                                  setFormData({
+                                    storeName: machine.store?.name || '',
+                                    storeCode: machine.store?.code || '',
+                                    storeId: machine.storeId || '',
+                                    machineName: machine.name,
+                                    machineCode: machine.code,
+                                  });
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg border border-blue-300 px-3 py-1.5 text-blue-700 hover:bg-blue-50 dark:border-blue-600 dark:text-blue-300 dark:hover:bg-blue-950"
+                              >
+                                <Edit2 size={16} />
+                                Edit
+                              </button>
                               <button
                                 onClick={() => setDeleteId(machine.id)}
                                 className="inline-flex items-center gap-1 rounded-lg border border-red-300 px-3 py-1.5 text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-950"

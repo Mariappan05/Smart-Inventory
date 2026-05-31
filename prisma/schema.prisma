@@ -508,6 +508,8 @@ model Production {
   store             Store?   @relation("ProductionStore", fields: [storeId], references: [id], onDelete: SetNull)
   machineId         String?
   machine           Machine? @relation("MachineProduction", fields: [machineId], references: [id], onDelete: SetNull)
+  machineName       String   @db.VarChar(160)
+  machineCode       String   @db.VarChar(100)
   componentName     String   @db.VarChar(160)
   componentCode     String   @db.VarChar(100)
   operation         String   @db.VarChar(160)
