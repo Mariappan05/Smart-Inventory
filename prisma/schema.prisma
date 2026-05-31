@@ -36,6 +36,8 @@ model User {
   createdTypes   Type[]                @relation("TypeCreatedBy")
   createdStores  Store[]               @relation("StoreCreatedBy")
   createdMonthlySchedules TentativeMonthlySchedule[] @relation("MonthlyScheduleCreatedBy")
+  createdMachines Machine[]            @relation("MachineCreatedBy")
+  createdProductions Production[]      @relation("ProductionCreatedBy")
   notifications  Notification[]
 
   @@index([role, isActive])
@@ -152,6 +154,8 @@ model Store {
   monthlySchedules TentativeMonthlySchedule[] @relation("MonthlyScheduleStore")
   alerts        SecurityAlert[]      @relation("AlertStore")
   scanLogs      QrScanLog[]          @relation("ScanStore")
+  machines      Machine[]            @relation("MachineStore")
+  productions   Production[]         @relation("ProductionStore")
 
   @@index([createdById])
 }
@@ -478,6 +482,46 @@ model InwardEntry {
   @@index([invoiceNumber])
   @@index([storeId])
   @@index([createdAt])
+}
+
+model Machine {
+  id            String   @id @default(cuid())
+  name          String   @db.VarChar(160)
+  code          String   @db.VarChar(100)
+  storeId       String?
+  store         Store?   @relation("MachineStore", fields: [storeId], references: [id], onDelete: SetNull)
+  createdById   String?
+  createdBy     User?    @relation("MachineCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  productions   Production[] @relation("MachineProduction")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([code, storeId])
+  @@index([storeId])
+  @@index([createdById])
+}
+
+model Production {
+  id                String   @id @default(cuid())
+  date              DateTime
+  storeId           String?
+  store             Store?   @relation("ProductionStore", fields: [storeId], references: [id], onDelete: SetNull)
+  machineId         String?
+  machine           Machine? @relation("MachineProduction", fields: [machineId], references: [id], onDelete: SetNull)
+  componentName     String   @db.VarChar(160)
+  componentCode     String   @db.VarChar(100)
+  operation         String   @db.VarChar(160)
+  toolName          String   @db.VarChar(160)
+  productionQuantity Int
+  createdById       String?
+  createdBy         User?    @relation("ProductionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([date])
+  @@index([storeId])
+  @@index([machineId])
+  @@index([createdById])
 }
 
 enum UserRole {

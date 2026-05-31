@@ -6,7 +6,6 @@ import { Menu, X } from "lucide-react";
 import {
   LayoutDashboard,
   Package,
-  QrCode,
   FileText,
   Shield,
   Wrench,
@@ -47,12 +46,6 @@ const allNavItems = [
   // Supplier PO - Admin, Store Manager
   { label: "Supplier PO", icon: FileText, href: "/supplier-po", roles: ["ADMIN", "STORE_MANAGER"] },
   
-  // QR Code - Admin, Store Manager
-  { label: "QR Code", icon: QrCode, href: "/qr", roles: ["ADMIN", "STORE_MANAGER"] },
-  
-  // Machine IO - Admin, Store Manager
-  { label: "Machine IO", icon: ArrowLeftRight, href: "/machine-io", roles: ["ADMIN", "STORE_MANAGER"] },
-  
   // Request - Sub Store, Admin, Store Manager
   { label: "Request", icon: FileText, href: "/request", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"] },
   
@@ -61,9 +54,6 @@ const allNavItems = [
   
   // Production Entry - Sub Store, Admin, Store Manager
   { label: "Production Entry", icon: Package, href: "/production", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"] },
-  
-  // Categories - Admin, Store Manager
-  { label: "Categories", icon: Tag, href: "/categories", roles: ["ADMIN", "STORE_MANAGER"] },
   
   // Maintenance - Admin, Store Manager
   { label: "Maintenance", icon: Wrench, href: "/maintenance", roles: ["ADMIN", "STORE_MANAGER"] },

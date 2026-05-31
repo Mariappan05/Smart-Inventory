@@ -70,14 +70,8 @@ export const moduleAccess: Record<string, UserRole[]> = {
   // Production Entry - Sub Store, Admin, Store Manager
   "/production": ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"],
   
-  // Categories - Admin, Store Manager
-  "/categories": ["ADMIN", "STORE_MANAGER"],
-  
   // Store Rooms - Admin, Store Manager
   "/store-rooms": ["ADMIN", "STORE_MANAGER"],
-  
-  // Machine IO - Admin, Store Manager
-  "/machine-io": ["ADMIN", "STORE_MANAGER"],
   
   // Maintenance - Admin, Store Manager
   "/maintenance": ["ADMIN", "STORE_MANAGER"],
