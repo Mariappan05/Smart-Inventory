@@ -33,6 +33,9 @@ export async function GET(request: NextRequest) {
         name: true,
         itemCode: true,
         description: true,
+        lifeDuration: true,
+        variant: true,
+        unitPrice: true,
         storeId: true,
         createdAt: true,
       },
@@ -77,8 +80,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { customerName, componentName, componentCode, storeId } = body;
-    console.log("[Products API] Extracted fields:", { customerName, componentName, componentCode, storeId });
+    const { customerName, componentName, componentCode, storeId, rawMaterialType, rmSupplier, rmPrice } = body;
+    console.log("[Products API] Extracted fields:", { customerName, componentName, componentCode, storeId, rawMaterialType, rmSupplier, rmPrice });
 
     // Validation
     if (!customerName || !customerName.trim()) {
@@ -113,7 +116,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[Products API] Using Store ID from request:", storeId);
+    if (!rawMaterialType || !rawMaterialType.trim()) {
+      console.log("[Products API] Validation failed: Raw material type missing");
+      return NextResponse.json(
+        { success: false, error: "Raw material type is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!rmSupplier || !rmSupplier.trim()) {
+      console.log("[Products API] Validation failed: RM supplier missing");
+      return NextResponse.json(
+        { success: false, error: "RM supplier is required" },
+        { status: 400 }
+      );
+    }
+
+    if (rmPrice === undefined || rmPrice === null || isNaN(parseFloat(rmPrice))) {
+      console.log("[Products API] Validation failed: RM price invalid");
+      return NextResponse.json(
+        { success: false, error: "Valid RM price is required" },
+        { status: 400 }
+      );
+    }
 
     console.log("[Products API] Using Store ID from request:", storeId);
 
@@ -139,7 +164,9 @@ export async function POST(request: NextRequest) {
         name: componentName.trim(),
         itemCode: componentCode.trim(),
         description: `PRODUCT_${customerName.trim()}`,
-        lifeDuration: "N/A",
+        lifeDuration: rawMaterialType.trim(),
+        variant: rmSupplier.trim(),
+        unitPrice: parseFloat(rmPrice),
         stockQuantity: 0,
         minimumQuantity: 0,
         reorderQuantity: 0,
@@ -151,6 +178,9 @@ export async function POST(request: NextRequest) {
         name: true,
         itemCode: true,
         description: true,
+        lifeDuration: true,
+        variant: true,
+        unitPrice: true,
         storeId: true,
         createdAt: true,
       },

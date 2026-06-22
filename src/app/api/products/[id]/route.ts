@@ -12,7 +12,7 @@ export async function PATCH(
   try {
     const { id } = await context.params;
     const body = await req.json();
-    const { customerName, name, itemCode } = body;
+    const { customerName, name, itemCode, rawMaterialType, rmSupplier, rmPrice } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -21,9 +21,9 @@ export async function PATCH(
       );
     }
 
-    if (!customerName || !name || !itemCode) {
+    if (!customerName || !name || !itemCode || !rawMaterialType || !rmSupplier || rmPrice === undefined) {
       return NextResponse.json(
-        { success: false, error: "Customer name, name and item code are required" },
+        { success: false, error: "All fields are required" },
         { status: 400 }
       );
     }
@@ -62,7 +62,10 @@ export async function PATCH(
       data: { 
         name, 
         itemCode,
-        description: `PRODUCT_${customerName}`
+        description: `PRODUCT_${customerName}`,
+        lifeDuration: rawMaterialType,
+        variant: rmSupplier,
+        unitPrice: parseFloat(rmPrice)
       },
     });
 

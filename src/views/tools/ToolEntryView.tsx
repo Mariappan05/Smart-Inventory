@@ -24,6 +24,7 @@ type Operation = {
 type Tool = {
   id: string;
   itemId: string;
+  toolType?: string;
   toolName: string;
   operations: Operation[];
   supplierName: string;
@@ -53,6 +54,7 @@ type Supplier = {
 
 type ToolFormData = {
   itemId: string;
+  toolType: string;
   toolName: string;
   operation: Operation;
   supplierId: string;
@@ -77,6 +79,7 @@ interface PendingTool {
   storeName: string;
   itemId: string;
   itemName: string;
+  toolType: string;
   toolName: string;
   operation: Operation;
   supplierName: string;
@@ -91,6 +94,7 @@ export function ToolEntryView({ items }: Props) {
     storeId: "",
     storeName: "",
     itemId: "",
+    toolType: "",
     toolName: "",
     operation: { name: "", lifeSpan: 0 },
     supplierId: "",
@@ -111,6 +115,7 @@ export function ToolEntryView({ items }: Props) {
   const [editForm, setEditForm] = useState<ToolFormData & { id?: string }>({
     id: undefined,
     itemId: "",
+    toolType: "",
     toolName: "",
     operation: { name: "", lifeSpan: 0 },
     supplierId: "",
@@ -229,6 +234,7 @@ export function ToolEntryView({ items }: Props) {
     setEditForm({
       id: tool.id,
       itemId: tool.itemId,
+      toolType: tool.toolType || "",
       toolName: tool.toolName,
       operation: tool.operations[0] || { name: "", lifeSpan: 0 },
       supplierId: "",
@@ -243,6 +249,7 @@ export function ToolEntryView({ items }: Props) {
     setEditForm({
       id: undefined,
       itemId: "",
+      toolType: "",
       toolName: "",
       operation: { name: "", lifeSpan: 0 },
       supplierId: "",
@@ -277,6 +284,11 @@ export function ToolEntryView({ items }: Props) {
 
     if (!editForm.id) return;
 
+    if (!editForm.toolType.trim()) {
+      toast.error("Tool type is required");
+      return;
+    }
+
     if (!editForm.toolName.trim()) {
       toast.error("Tool name is required");
       return;
@@ -308,6 +320,7 @@ export function ToolEntryView({ items }: Props) {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          toolType: editForm.toolType.trim(),
           toolName: editForm.toolName.trim(),
           operations: [editForm.operation],
           supplierName: editForm.supplierName.trim(),
@@ -419,6 +432,11 @@ export function ToolEntryView({ items }: Props) {
       return;
     }
 
+    if (!form.toolType.trim()) {
+      toast.error("Tool type is required");
+      return;
+    }
+
     if (!form.toolName.trim()) {
       toast.error("Tool name is required");
       return;
@@ -446,6 +464,7 @@ export function ToolEntryView({ items }: Props) {
       storeName: form.storeName,
       itemId: form.itemId,
       itemName: selectedItem?.name || "Unknown",
+      toolType: form.toolType,
       toolName: form.toolName.trim(),
       operation: form.operation,
       supplierName: form.supplierName,
@@ -469,6 +488,7 @@ export function ToolEntryView({ items }: Props) {
       storeId: form.storeId,
       storeName: form.storeName,
       itemId: "",
+      toolType: "",
       toolName: "",
       operation: { name: "", lifeSpan: 0 },
       supplierId: "",
@@ -497,6 +517,7 @@ export function ToolEntryView({ items }: Props) {
             body: JSON.stringify({
               storeId: tool.storeId,
               itemId: tool.itemId,
+              toolType: tool.toolType,
               toolName: tool.toolName,
               operations: [tool.operation],
               supplierName: tool.supplierName,
@@ -540,6 +561,7 @@ export function ToolEntryView({ items }: Props) {
       storeId: tool.storeId,
       storeName: tool.storeName,
       itemId: tool.itemId,
+      toolType: tool.toolType,
       toolName: tool.toolName,
       operation: tool.operation,
       supplierId: suppliers.find(s => s.name === tool.supplierName)?.id || "",
@@ -666,6 +688,29 @@ export function ToolEntryView({ items }: Props) {
                 emptyMessage={form.storeId && filteredItems.length === 0 ? "No components available for this store" : undefined}
               />
 
+              {/* Tool Type */}
+              <ModernDropdown
+                label="Tool Type"
+                required
+                options={[
+                  { value: "Holder", label: "Holder" },
+                  { value: "COLLET", label: "COLLET" },
+                  { value: "Centre Drill", label: "Centre Drill" },
+                  { value: "Drill", label: "Drill" },
+                  { value: "Drill / Cutter", label: "Drill / Cutter" },
+                  { value: "Insert", label: "Insert" },
+                  { value: "Reamer", label: "Reamer" },
+                  { value: "Endmill", label: "Endmill" },
+                  { value: "Step Drill", label: "Step Drill" },
+                  { value: "Tap", label: "Tap" },
+                  { value: "Chamfer Tool", label: "Chamfer Tool" },
+                ]}
+                value={form.toolType}
+                onChange={(value) => setForm({ ...form, toolType: value as string })}
+                placeholder="Select tool type..."
+                searchPlaceholder="Search tool types..."
+              />
+
               {/* Tool Name */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -681,8 +726,6 @@ export function ToolEntryView({ items }: Props) {
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                 />
               </div>
-
-              {/* Operation - Single Operation Only */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Operation <span className="text-red-500">*</span>
@@ -772,6 +815,7 @@ export function ToolEntryView({ items }: Props) {
                       storeId: form.storeId,
                       storeName: form.storeName,
                       itemId: "",
+                      toolType: "",
                       toolName: "",
                       operation: { name: "", lifeSpan: 0 },
                       supplierId: "",
@@ -876,6 +920,7 @@ export function ToolEntryView({ items }: Props) {
                   </th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Store</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Component</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Tool Type</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Tool Name</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Operation</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">Supplier</th>
@@ -897,6 +942,7 @@ export function ToolEntryView({ items }: Props) {
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">{tool.storeName}</td>
                     <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">{tool.itemName}</td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">{tool.toolType}</td>
                     <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">{tool.toolName}</td>
                     <td className="px-6 py-4 text-sm">
                       <span className="inline-block bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 px-2 py-1 rounded text-xs">
@@ -1010,6 +1056,9 @@ export function ToolEntryView({ items }: Props) {
                   Product
                 </th>
                 <th className="hidden sm:table-cell px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Tool Type
+                </th>
+                <th className="hidden sm:table-cell px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Tool Name
                 </th>
                 <th className="hidden md:table-cell px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -1032,7 +1081,7 @@ export function ToolEntryView({ items }: Props) {
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={10} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span className="text-sm">Loading tools...</span>
@@ -1041,7 +1090,7 @@ export function ToolEntryView({ items }: Props) {
                 </tr>
               ) : tools.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+                  <td colSpan={10} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
                     No tools created yet
                   </td>
                 </tr>
@@ -1061,6 +1110,9 @@ export function ToolEntryView({ items }: Props) {
                     </td>
                     <td className="px-3 py-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                       {getItemName(tool.itemId)}
+                    </td>
+                    <td className="hidden sm:table-cell px-3 py-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100">
+                      {tool.toolType}
                     </td>
                     <td className="hidden sm:table-cell px-3 py-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                       {tool.toolName}
@@ -1133,6 +1185,29 @@ export function ToolEntryView({ items }: Props) {
             </div>
 
             <form onSubmit={handleEditSubmit} className="p-4 sm:p-6 space-y-6">
+              {/* Tool Type */}
+              <ModernDropdown
+                label="Tool Type"
+                required
+                options={[
+                  { value: "Holder", label: "Holder" },
+                  { value: "COLLET", label: "COLLET" },
+                  { value: "Centre Drill", label: "Centre Drill" },
+                  { value: "Drill", label: "Drill" },
+                  { value: "Drill / Cutter", label: "Drill / Cutter" },
+                  { value: "Insert", label: "Insert" },
+                  { value: "Reamer", label: "Reamer" },
+                  { value: "Endmill", label: "Endmill" },
+                  { value: "Step Drill", label: "Step Drill" },
+                  { value: "Tap", label: "Tap" },
+                  { value: "Chamfer Tool", label: "Chamfer Tool" },
+                ]}
+                value={editForm.toolType}
+                onChange={(value) => setEditForm({ ...editForm, toolType: value as string })}
+                placeholder="Select tool type..."
+                searchPlaceholder="Search tool types..."
+              />
+
               {/* Tool Name */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">

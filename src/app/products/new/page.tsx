@@ -21,6 +21,9 @@ interface ProductItem {
   customerName: string;
   componentName: string;
   componentCode: string;
+  rawMaterialType: string;
+  rmSupplier: string;
+  rmPrice: number;
 }
 
 interface CreatedProduct {
@@ -30,6 +33,9 @@ interface CreatedProduct {
   storeId: string;
   description: string;
   customerName: string;
+  rawMaterialType?: string;
+  rmSupplier?: string;
+  rmPrice?: number;
   createdAt: string;
 }
 
@@ -46,6 +52,9 @@ export default function NewProductPage() {
     customerName: "",
     name: "",
     itemCode: "",
+    rawMaterialType: "",
+    rmSupplier: "",
+    rmPrice: "",
   });
   
   const [form, setForm] = useState({
@@ -54,6 +63,9 @@ export default function NewProductPage() {
     customerName: "",
     componentName: "",
     componentCode: "",
+    rawMaterialType: "",
+    rmSupplier: "",
+    rmPrice: "",
   });
 
   const [pendingProducts, setPendingProducts] = useState<ProductItem[]>([]);
@@ -121,7 +133,10 @@ export default function NewProductPage() {
           return {
             ...p,
             storeName: store?.name || "Unknown Store",
-            customerName
+            customerName,
+            rawMaterialType: p.lifeDuration || "",
+            rmSupplier: p.variant || "",
+            rmPrice: p.unitPrice || 0
           };
         });
         setProducts(productsWithStore);
@@ -219,12 +234,30 @@ export default function NewProductPage() {
       customerName: product.customerName,
       name: product.name,
       itemCode: product.itemCode,
+      rawMaterialType: product.rawMaterialType || "",
+      rmSupplier: product.rmSupplier || "",
+      rmPrice: product.rmPrice?.toString() || "",
     });
   };
 
   const handleUpdateProduct = async (productId: string) => {
     if (!editProductForm.customerName.trim() || !editProductForm.name.trim() || !editProductForm.itemCode.trim()) {
-      toast.error("All fields are required");
+      toast.error("Customer name, component name, and code are required");
+      return;
+    }
+
+    if (!editProductForm.rawMaterialType.trim()) {
+      toast.error("Raw material type is required");
+      return;
+    }
+
+    if (!editProductForm.rmSupplier.trim()) {
+      toast.error("RM supplier is required");
+      return;
+    }
+
+    if (!editProductForm.rmPrice || isNaN(parseFloat(editProductForm.rmPrice))) {
+      toast.error("Valid RM price is required");
       return;
     }
 
@@ -236,6 +269,9 @@ export default function NewProductPage() {
           customerName: editProductForm.customerName,
           name: editProductForm.name,
           itemCode: editProductForm.itemCode,
+          rawMaterialType: editProductForm.rawMaterialType,
+          rmSupplier: editProductForm.rmSupplier,
+          rmPrice: parseFloat(editProductForm.rmPrice),
         }),
       });
 
@@ -287,6 +323,18 @@ export default function NewProductPage() {
       toast.error("Component code is required");
       return false;
     }
+    if (!form.rawMaterialType.trim()) {
+      toast.error("Raw material type is required");
+      return false;
+    }
+    if (!form.rmSupplier.trim()) {
+      toast.error("RM supplier is required");
+      return false;
+    }
+    if (!form.rmPrice || isNaN(parseFloat(form.rmPrice))) {
+      toast.error("Valid RM price is required");
+      return false;
+    }
     return true;
   };
 
@@ -310,6 +358,9 @@ export default function NewProductPage() {
       customerName: form.customerName,
       componentName: form.componentName,
       componentCode: form.componentCode,
+      rawMaterialType: form.rawMaterialType,
+      rmSupplier: form.rmSupplier,
+      rmPrice: parseFloat(form.rmPrice),
     };
 
     if (editingId) {
@@ -334,6 +385,9 @@ export default function NewProductPage() {
       customerName: "",
       componentName: "",
       componentCode: "",
+      rawMaterialType: "",
+      rmSupplier: "",
+      rmPrice: "",
     });
   };
 
@@ -344,6 +398,9 @@ export default function NewProductPage() {
       customerName: item.customerName,
       componentName: item.componentName,
       componentCode: item.componentCode,
+      rawMaterialType: item.rawMaterialType,
+      rmSupplier: item.rmSupplier,
+      rmPrice: item.rmPrice.toString(),
     });
     setEditingId(item.tempId);
   };
@@ -358,6 +415,9 @@ export default function NewProductPage() {
         customerName: "",
         componentName: "",
         componentCode: "",
+        rawMaterialType: "",
+        rmSupplier: "",
+        rmPrice: "",
       });
     }
     toast.success("Item removed");
@@ -384,6 +444,9 @@ export default function NewProductPage() {
               componentName: product.componentName,
               componentCode: product.componentCode,
               storeId: product.storeId,
+              rawMaterialType: product.rawMaterialType,
+              rmSupplier: product.rmSupplier,
+              rmPrice: product.rmPrice,
             }),
           });
 
@@ -524,6 +587,52 @@ export default function NewProductPage() {
               />
             </div>
 
+            {/* Raw Material Type */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                RAW MATERIAL TYPE <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Enter raw material type"
+                value={form.rawMaterialType}
+                onChange={(e) => setForm({ ...form, rawMaterialType: e.target.value })}
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+              />
+            </div>
+
+            {/* RM Supplier */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                RM SUPPLIER <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Enter RM supplier"
+                value={form.rmSupplier}
+                onChange={(e) => setForm({ ...form, rmSupplier: e.target.value })}
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+              />
+            </div>
+
+            {/* RM Price */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                RM PRICE <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="Enter RM price (numbers only)"
+                value={form.rmPrice}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d.]/g, "");
+                  setForm({ ...form, rmPrice: value });
+                }}
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+              />
+            </div>
+
             {/* Buttons */}
             <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
               <button
@@ -545,6 +654,9 @@ export default function NewProductPage() {
                       customerName: "",
                       componentName: "",
                       componentCode: "",
+                      rawMaterialType: "",
+                      rmSupplier: "",
+                      rmPrice: "",
                     });
                   }}
                   className="rounded-lg border border-slate-300 px-6 py-2 text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 font-medium"
@@ -580,6 +692,15 @@ export default function NewProductPage() {
                     Component Code
                   </th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    Raw Material
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    RM Supplier
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    RM Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
                     Actions
                   </th>
                 </tr>
@@ -598,6 +719,15 @@ export default function NewProductPage() {
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
                       {product.componentCode}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                      {product.rawMaterialType}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                      {product.rmSupplier}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                      ${product.rmPrice.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <div className="flex items-center gap-2">
@@ -701,6 +831,15 @@ export default function NewProductPage() {
                   Product Code
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Raw Material
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  RM Supplier
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  RM Price
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
                   Created At
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -711,7 +850,7 @@ export default function NewProductPage() {
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={10} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Loading products...
@@ -720,7 +859,7 @@ export default function NewProductPage() {
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={10} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                     No products created yet
                   </td>
                 </tr>
@@ -772,6 +911,46 @@ export default function NewProductPage() {
                         />
                       ) : (
                         product.itemCode
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                      {editingProductId === product.id ? (
+                        <input
+                          type="text"
+                          value={editProductForm.rawMaterialType}
+                          onChange={(e) => setEditProductForm({ ...editProductForm, rawMaterialType: e.target.value })}
+                          className="w-full rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-700"
+                        />
+                      ) : (
+                        product.rawMaterialType || "N/A"
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                      {editingProductId === product.id ? (
+                        <input
+                          type="text"
+                          value={editProductForm.rmSupplier}
+                          onChange={(e) => setEditProductForm({ ...editProductForm, rmSupplier: e.target.value })}
+                          className="w-full rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-700"
+                        />
+                      ) : (
+                        product.rmSupplier || "N/A"
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
+                      {editingProductId === product.id ? (
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={editProductForm.rmPrice}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[^\d.]/g, "");
+                            setEditProductForm({ ...editProductForm, rmPrice: value });
+                          }}
+                          className="w-full rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-700"
+                        />
+                      ) : (
+                        product.rmPrice ? `$${product.rmPrice.toFixed(2)}` : "N/A"
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">

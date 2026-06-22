@@ -7,6 +7,9 @@ export const productCreateSchema = z.object({
   itemId: z.string().min(1, "Item is required"),
   plantId: z.string().min(1, "Store is required"),
   price: z.coerce.number().positive("Price must be greater than 0"),
+  rawMaterialType: z.string().min(1, "Raw material type is required"),
+  rmSupplier: z.string().min(1, "RM supplier is required"),
+  rmPrice: z.coerce.number().positive("RM price must be greater than 0"),
 });
 
 export const productUpdateSchema = productCreateSchema.partial();

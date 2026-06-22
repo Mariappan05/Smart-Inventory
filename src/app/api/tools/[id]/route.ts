@@ -8,7 +8,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { toolName, operations, supplierName, supplierCode, rate } = body;
+    const { toolType, toolName, operations, supplierName, supplierCode, rate } = body;
 
     // Verify tool exists
     const tool = await prisma.tool.findUnique({
@@ -23,6 +23,13 @@ export async function PUT(
     }
 
     // Validation
+    if (!toolType || !toolType.trim()) {
+      return NextResponse.json(
+        { success: false, error: "Tool type is required" },
+        { status: 400 }
+      );
+    }
+
     if (!toolName || !toolName.trim()) {
       return NextResponse.json(
         { success: false, error: "Tool name is required" },
@@ -79,6 +86,7 @@ export async function PUT(
     const updatedTool = await prisma.tool.update({
       where: { id },
       data: {
+        toolType: toolType.trim(),
         toolName: toolName.trim(),
         operations: operations.map((op: { name: string; lifeSpan: string | number }) => ({
           name: op.name.trim(),

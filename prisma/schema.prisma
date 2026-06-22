@@ -1,20 +1,22 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  previewFeatures = ["nativeDistinct"]
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider     = "postgresql"
+  url          = env("DATABASE_URL")
+  directUrl    = env("DIRECT_URL")
+  relationMode = "prisma"
 }
 
 model User {
   id             String                @id @default(cuid())
-  employeeNo     String                @unique @db.VarChar(30)
-  email          String                @unique @db.VarChar(255)
-  name           String                @db.VarChar(120)
+  employeeNo     String                @unique
+  email          String                @unique
+  name           String               
   role           UserRole              @default(EMPLOYEE)
-  hashedPassword String                @db.VarChar(255)
+  hashedPassword String               
   isActive       Boolean               @default(true)
   storeId        String?
   store          Store?                @relation("UserStore", fields: [storeId], references: [id], onDelete: SetNull)
@@ -48,7 +50,7 @@ model UserImage {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  url       String   @db.VarChar(500)
+  url       String  
   isPrimary Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -58,7 +60,7 @@ model UserImage {
 
 model Type {
   id          String    @id @default(cuid())
-  name        String    @db.VarChar(120)
+  name        String   
   supplierId  String?
   supplier    Supplier? @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   storeId     String?
@@ -78,13 +80,13 @@ model Type {
 
 model Item {
   id                String     @id @default(cuid())
-  name              String     @db.VarChar(160)
-  variant           String?    @db.VarChar(100)
-  itemCode          String?    @db.VarChar(100)
-  description       String     @db.Text
-  lifeDuration      String     @db.VarChar(100)
+  name              String    
+  variant           String?   
+  itemCode          String?   
+  description       String    
+  lifeDuration      String    
   unitPrice         Float?     @default(0)
-  imagesJson        String?    @db.Text
+  imagesJson        String?   
   supplierId        String?
   supplier          Supplier?  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   typeId            String?
@@ -111,11 +113,11 @@ model Item {
 
 model Supplier {
   id           String     @id @default(cuid())
-  name         String     @unique @db.VarChar(160)
-  code         String     @unique @db.VarChar(40)
-  contactEmail String?    @db.VarChar(255)
-  contactPhone String?    @db.VarChar(40)
-  address      String?    @db.Text
+  name         String     @unique
+  code         String     @unique
+  contactEmail String?   
+  contactPhone String?   
+  address      String?   
   storeId      String?
   store        Store?     @relation(fields: [storeId], references: [id], onDelete: SetNull)
   createdById  String?
@@ -134,11 +136,11 @@ model Supplier {
 
 model Store {
   id            String               @id @default(cuid())
-  name          String               @unique @db.VarChar(120)
-  code          String               @unique @db.VarChar(10)
+  name          String               @unique
+  code          String               @unique
   isDefault     Boolean              @default(false)
   createdById   String?
-  createdBy     User?                @relation("StoreCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy     User?                @relation("StoreCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict)
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
   users         User[]               @relation("UserStore")
@@ -162,12 +164,15 @@ model Store {
 
 model Product {
   id            String                 @id @default(cuid())
-  serial        String                 @unique @db.VarChar(80)
+  serial        String                 @unique
   supplierId    String
   typeId        String
   itemId        String
   storeId       String
   price         Float?
+  rawMaterialType String?
+  rmSupplier    String?
+  rmPrice       Float?
   status        ProductStatus          @default(AVAILABLE)
   createdById   String?
   createdBy     User?                  @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
@@ -195,10 +200,11 @@ model Tool {
   id              String   @id @default(cuid())
   itemId          String
   item            Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  toolName        String   @db.VarChar(160)
+  toolType        String?
+  toolName        String  
   operations      Json     @default("[]")
-  supplierName    String   @db.VarChar(160)
-  supplierCode    String   @db.VarChar(100)
+  supplierName    String  
+  supplierCode    String  
   rate            Float
   storeId         String?
   store           Store?   @relation(fields: [storeId], references: [id], onDelete: SetNull)
@@ -216,7 +222,7 @@ model Tool {
 
 model TentativeMonthlySchedule {
   id              String                        @id @default(cuid())
-  customerName    String                        @db.VarChar(160)
+  customerName    String                       
   storeId         String?
   store           Store?                        @relation("MonthlyScheduleStore", fields: [storeId], references: [id], onDelete: SetNull)
   createdById     String?
@@ -263,8 +269,8 @@ model ProductImage {
   id        String   @id @default(cuid())
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  url       String   @db.VarChar(500)
-  caption   String?  @db.VarChar(200)
+  url       String  
+  caption   String? 
   isPrimary Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -279,9 +285,9 @@ model ProductOutLog {
   fromStore       Store    @relation("OutFrom", fields: [fromStoreId], references: [id])
   outById         String?
   outBy           User?    @relation("OutBy", fields: [outById], references: [id], onDelete: SetNull)
-  issuedTo        String   @db.VarChar(160)
+  issuedTo        String  
   issuedToId      String?
-  reason          String?  @db.Text
+  reason          String? 
   expectedReturnAt DateTime?
   outAt           DateTime @default(now())
 
@@ -298,7 +304,7 @@ model ProductInLog {
   toStore       Store    @relation("InTo", fields: [toStoreId], references: [id])
   inById        String?
   inBy          User?    @relation("InBy", fields: [inById], references: [id], onDelete: SetNull)
-  conditionNote String?  @db.Text
+  conditionNote String? 
   inAt          DateTime @default(now())
 
   @@index([productId, inAt])
@@ -315,7 +321,7 @@ model QrScanLog {
   scannedById String?
   scannedBy   User?       @relation(fields: [scannedById], references: [id], onDelete: SetNull)
   source      ScanSource  @default(MOBILE)
-  payload     String?     @db.Text
+  payload     String?    
   scannedAt   DateTime    @default(now())
 
   @@index([productId, scannedAt])
@@ -333,8 +339,8 @@ model SecurityAlert {
   reportedBy   User?          @relation("AlertBy", fields: [reportedById], references: [id], onDelete: SetNull)
   severity     AlertSeverity @default(MEDIUM)
   status       AlertStatus   @default(OPEN)
-  title        String        @db.VarChar(180)
-  description  String?       @db.Text
+  title        String       
+  description  String?      
   createdAt    DateTime      @default(now())
   resolvedAt   DateTime?
 
@@ -362,7 +368,7 @@ model Schedule {
   totalWithGst      Float
   orderDeliveryDate DateTime
   deliveryDate      DateTime?
-  supplierBillNumber String?       @db.VarChar(100)
+  supplierBillNumber String?      
   status            ScheduleStatus @default(TENTATIVE)
   createdById       String?
   createdBy         User?          @relation("ScheduleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
@@ -374,16 +380,16 @@ model Schedule {
   deliveredAt       DateTime?
   deliveredById     String?
   deliveredBy       User?          @relation("ScheduleDeliveredBy", fields: [deliveredById], references: [id], onDelete: SetNull)
-  notes             String?        @db.Text
-  billUrl           String?        @db.VarChar(500)
-  qrCode            String?        @db.Text
+  notes             String?       
+  billUrl           String?       
+  qrCode            String?       
   reminderSent      Boolean        @default(false)
   
   // Monthly Schedule fields
   isMonthlySchedule Boolean        @default(false)
-  customerName      String?        @db.VarChar(160)
-  componentName     String?        @db.VarChar(160)
-  componentCode     String?        @db.VarChar(100)
+  customerName      String?       
+  componentName     String?       
+  componentCode     String?       
   scheduleType      ScheduleType   @default(TENTATIVE_MONTHLY)
   
   createdAt         DateTime       @default(now())
@@ -408,8 +414,8 @@ model Notification {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title     String   @db.VarChar(255)
-  message   String   @db.Text
+  title     String  
+  message   String  
   type      NotificationType
   productId String?
   isRead    Boolean  @default(false)
@@ -423,16 +429,16 @@ model Notification {
 
 model ToolRequest {
   id                 String        @id @default(cuid())
-  toolName           String        @db.VarChar(160)
-  componentName      String        @db.VarChar(160)
-  componentCode      String        @db.VarChar(100)
+  toolName           String       
+  componentName      String       
+  componentCode      String       
   productionQuantity Int
   fromDate           DateTime
   toDate             DateTime
-  machineNumber      String        @db.VarChar(100)
-  machineCode        String        @db.VarChar(100)
-  storeCode          String        @db.VarChar(10)
-  storeName          String        @db.VarChar(120)
+  machineNumber      String       
+  machineCode        String       
+  storeCode          String       
+  storeName          String       
   targetStoreId      String?
   status             RequestStatus @default(PENDING)
   createdById        String?
@@ -449,13 +455,13 @@ model ToolRequest {
 
 model SupplierPO {
   id              String   @id @default(cuid())
-  poNumber        String   @unique @db.VarChar(100)
-  supplierName    String   @db.VarChar(160)
-  supplierCode    String   @db.VarChar(100)
-  pdfUrl          String?  @db.VarChar(500)
-  pdfFileName     String?  @db.VarChar(255)
+  poNumber        String   @unique
+  supplierName    String  
+  supplierCode    String  
+  pdfUrl          String? 
+  pdfFileName     String? 
   totalAmount     Float?
-  notes           String?  @db.Text
+  notes           String? 
   createdById     String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -467,12 +473,12 @@ model SupplierPO {
 
 model InwardEntry {
   id              String   @id @default(cuid())
-  poNumber        String?  @db.VarChar(100)
-  invoiceNumber   String?  @db.VarChar(100)
-  invoiceDate     String?  @db.VarChar(50)
+  poNumber        String? 
+  invoiceNumber   String? 
+  invoiceDate     String? 
   productDetails  Json
-  qrCode          String?  @db.Text
-  barcode         String?  @db.VarChar(200)
+  qrCode          String? 
+  barcode         String? 
   storeId         String?
   createdById     String?
   createdAt       DateTime @default(now())
@@ -486,8 +492,8 @@ model InwardEntry {
 
 model Machine {
   id            String   @id @default(cuid())
-  name          String   @db.VarChar(160)
-  code          String   @db.VarChar(100)
+  name          String  
+  code          String  
   storeId       String?
   store         Store?   @relation("MachineStore", fields: [storeId], references: [id], onDelete: SetNull)
   createdById   String?
@@ -508,12 +514,12 @@ model Production {
   store             Store?   @relation("ProductionStore", fields: [storeId], references: [id], onDelete: SetNull)
   machineId         String?
   machine           Machine? @relation("MachineProduction", fields: [machineId], references: [id], onDelete: SetNull)
-  machineName       String   @db.VarChar(160)
-  machineCode       String   @db.VarChar(100)
-  componentName     String   @db.VarChar(160)
-  componentCode     String   @db.VarChar(100)
-  operation         String   @db.VarChar(160)
-  toolName          String   @db.VarChar(160)
+  machineName       String  
+  machineCode       String  
+  componentName     String  
+  componentCode     String  
+  operation         String  
+  toolName          String  
   productionQuantity Int
   createdById       String?
   createdBy         User?    @relation("ProductionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)

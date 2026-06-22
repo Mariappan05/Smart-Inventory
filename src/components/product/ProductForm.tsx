@@ -47,6 +47,9 @@ export function ProductForm({
           itemId: initialData.itemId,
           plantId: initialData.plantId,
           price: initialData.price,
+          rawMaterialType: initialData.rawMaterialType,
+          rmSupplier: initialData.rmSupplier,
+          rmPrice: initialData.rmPrice,
         }
       : {
           serial: "Loading...",
@@ -309,6 +312,56 @@ export function ProductForm({
             </span>
           </div>
         )}
+      </div>
+
+      {/* Raw Material Type */}
+      <div>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          Raw Material Type <span className="text-red-500">*</span>
+        </label>
+        <input
+          {...register("rawMaterialType")}
+          type="text"
+          placeholder="Enter raw material type"
+          disabled={loading}
+          className={fieldClass}
+        />
+        {errors.rawMaterialType && <p className="mt-1 text-xs text-red-600">{errors.rawMaterialType.message}</p>}
+      </div>
+
+      {/* RM Supplier */}
+      <div>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          RM Supplier <span className="text-red-500">*</span>
+        </label>
+        <input
+          {...register("rmSupplier")}
+          type="text"
+          placeholder="Enter RM supplier name"
+          disabled={loading}
+          className={fieldClass}
+        />
+        {errors.rmSupplier && <p className="mt-1 text-xs text-red-600">{errors.rmSupplier.message}</p>}
+      </div>
+
+      {/* RM Price */}
+      <div>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          RM Price <span className="text-red-500">*</span>
+        </label>
+        <div className="relative mt-1">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">₹</span>
+          <input
+            {...register("rmPrice")}
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            disabled={loading}
+            className={`${fieldClass} mt-0 pl-7`}
+          />
+        </div>
+        {errors.rmPrice && <p className="mt-1 text-xs text-red-600">{errors.rmPrice.message}</p>}
       </div>
 
       <div>

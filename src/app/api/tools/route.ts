@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { itemId, toolName, operations, supplierName, supplierCode, rate, storeId } = body;
+    const { itemId, toolType, toolName, operations, supplierName, supplierCode, rate, storeId } = body;
 
     // Validation
     if (!storeId || !storeId.trim()) {
@@ -97,6 +97,13 @@ export async function POST(request: NextRequest) {
     if (!itemId || !itemId.trim()) {
       return NextResponse.json(
         { success: false, error: "Component is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!toolType || !toolType.trim()) {
+      return NextResponse.json(
+        { success: false, error: "Tool type is required" },
         { status: 400 }
       );
     }
@@ -123,9 +130,9 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      if (op.lifeSpan === undefined || op.lifeSpan === null || isNaN(op.lifeSpan) || op.lifeSpan < 0) {
+      if (op.lifeSpan === undefined || op.lifeSpan === null || isNaN(op.lifeSpan) || op.lifeSpan <= 0) {
         return NextResponse.json(
-          { success: false, error: "Each operation must have a valid life span" },
+          { success: false, error: "Each operation must have a valid life span greater than 0" },
           { status: 400 }
         );
       }
@@ -188,6 +195,7 @@ export async function POST(request: NextRequest) {
     const tool = await prisma.tool.create({
       data: {
         itemId: itemId.trim(),
+        toolType: toolType.trim(),
         toolName: toolName.trim(),
         operations: operations.map((op: { name: string; lifeSpan: number }) => ({
           name: op.name.trim(),
