@@ -5,6 +5,7 @@ import { toServiceError } from "@/services/base/serviceError";
 export type LoginInput = {
   identifier: string;
   password: string;
+  rememberMe?: boolean;
 };
 
 export class AuthController {
@@ -12,7 +13,7 @@ export class AuthController {
 
   async login(input: LoginInput) {
     try {
-      const result = await this.authService.login(input.identifier, input.password);
+      const result = await this.authService.login(input.identifier, input.password, input.rememberMe);
       return { token: result.token, userId: result.userId, role: result.role };
     } catch (error) {
       throw toServiceError(error, "Login failed");

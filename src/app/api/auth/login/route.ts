@@ -4,7 +4,7 @@ import { authCookieName, authCookieOptions } from "@/lib/auth/session";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { identifier?: string; password?: string };
+    const body = (await request.json()) as { identifier?: string; password?: string; rememberMe?: boolean };
 
     console.log("[Login] Received login request for:", body.identifier);
 
@@ -32,7 +32,8 @@ export async function POST(request: NextRequest) {
       console.log("[Login] Attempting authentication...");
       const session = await controller.login({ 
         identifier: body.identifier, 
-        password: body.password 
+        password: body.password,
+        rememberMe: body.rememberMe
       });
       
       console.log("[Login] Authentication successful for user:", session.userId);
@@ -44,16 +45,21 @@ export async function POST(request: NextRequest) {
         redirect: "/"
       });
       
+      // Determine cookie maxAge based on rememberMe
+      const cookieMaxAge = body.rememberMe 
+        ? 60 * 60 * 24 * 30 // 30 days if remember me is checked
+        : 60 * 60 * 24 * 7; // 7 days otherwise (changed from 8 hours)
+      
       // Set cookie with proper settings for production
       response.cookies.set(authCookieName, session.token, {
         httpOnly: true,
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
         path: "/",
-        maxAge: 60 * 60 * 8, // 8 hours
+        maxAge: cookieMaxAge,
       });
       
-      console.log("[Login] Cookie set, returning response");
+      console.log("[Login] Cookie set with maxAge:", cookieMaxAge, "seconds, rememberMe:", body.rememberMe);
       return response;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Invalid credentials";

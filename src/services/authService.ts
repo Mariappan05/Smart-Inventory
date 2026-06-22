@@ -38,7 +38,7 @@ export class AuthService {
     }
   }
 
-  async login(identifier: string, password: string): Promise<AuthResult> {
+  async login(identifier: string, password: string, rememberMe?: boolean): Promise<AuthResult> {
     try {
       let user = null;
       
@@ -72,13 +72,16 @@ export class AuthService {
         throw new Error("JWT_SECRET is not configured");
       }
 
+      // Set token expiry based on rememberMe
+      const expiresIn = rememberMe ? "30d" : "8h";
+
       const token = jwt.sign({ 
         sub: user.id, 
         role: user.role, 
         name: user.name, 
         email: user.email, 
         storeId: user.storeId
-      }, secret, { expiresIn: "8h" });
+      }, secret, { expiresIn });
 
       try {
         await this.userRepository.update(user.id, { lastLoginAt: new Date() });

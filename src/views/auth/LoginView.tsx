@@ -1,18 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { saveRememberedCredentials, clearRememberedCredentials, getRememberedCredentials } from "@/lib/auth/rememberMe";
 
 export function LoginView() {
+  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+
+  useEffect(() => {
+    // Load saved credentials first
+    const { username, rememberMe } = getRememberedCredentials();
+    
+    if (username) {
+      setIdentifier(username);
+      setRememberMe(rememberMe);
+    }
+
+    // Check if user already has valid session
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        if (response.ok) {
+          // User is already logged in, redirect to home
+          router.replace("/");
+          return;
+        }
+      } catch (error) {
+        console.log("No active session");
+      }
+    };
+
+    checkSession();
+  }, [router]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const formData = new FormData(e.target as HTMLFormElement);
-    const identifier = formData.get("identifier") as string;
-    const password = formData.get("password") as string;
-    const rememberMe = formData.get("rememberMe") === "on";
 
     if (!identifier || !password) {
       toast.error("Username/Email and password are required");
@@ -25,7 +52,7 @@ export function LoginView() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
+        body: JSON.stringify({ identifier, password, rememberMe }),
       });
 
       if (!response.ok) {
@@ -37,20 +64,17 @@ export function LoginView() {
 
       const data = await response.json();
       
+      // Handle Remember Me
       if (rememberMe) {
-        localStorage.setItem("savedIdentifier", identifier);
-        localStorage.setItem("savedPassword", password);
+        saveRememberedCredentials(identifier);
       } else {
-        localStorage.removeItem("savedIdentifier");
-        localStorage.removeItem("savedPassword");
+        clearRememberedCredentials();
       }
 
       toast.success("Login successful!");
       
-      // Wait a bit for cookie to be set, then redirect
-      setTimeout(() => {
-        window.location.replace("/");
-      }, 100);
+      // Redirect to home
+      router.replace("/");
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please try again.");
@@ -74,7 +98,8 @@ export function LoginView() {
               type="text"
               name="identifier"
               autoComplete="username"
-              defaultValue={typeof window !== "undefined" ? localStorage.getItem("savedIdentifier") || "" : ""}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
               placeholder="Employee ID or Email"
               required
@@ -87,7 +112,8 @@ export function LoginView() {
               type="password"
               name="password"
               autoComplete="current-password"
-              defaultValue={typeof window !== "undefined" ? localStorage.getItem("savedPassword") || "" : ""}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
               placeholder=""
               required
@@ -97,13 +123,13 @@ export function LoginView() {
           <div className="flex items-center">
             <input
               type="checkbox"
-              name="rememberMe"
               id="rememberMe"
-              defaultChecked={typeof window !== "undefined" ? !!localStorage.getItem("savedIdentifier") : false}
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
               className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-2 focus:ring-slate-200"
             />
             <label htmlFor="rememberMe" className="ml-2 text-sm text-slate-600">
-              Remember username and password
+              Remember me
             </label>
           </div>
 

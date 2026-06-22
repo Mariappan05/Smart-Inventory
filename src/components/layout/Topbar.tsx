@@ -43,7 +43,13 @@ export function Topbar() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("/api/auth/logout", { method: "POST" });
+      // Keep remembered username when logging out
+      const response = await fetch("/api/auth/logout", { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clearRememberedUsername: false })
+      });
+      
       if (!response.ok) {
         throw new Error("Logout failed");
       }
