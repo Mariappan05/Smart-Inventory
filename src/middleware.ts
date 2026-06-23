@@ -41,6 +41,20 @@ function isAuthHandledByRoute(pathname: string) {
     "/api/users",
     "/api/profile",
     "/api/plants",
+    // Production routes (history, component-codes, batch, etc.)
+    "/api/production",
+    // Report export / generation routes
+    "/api/reports",
+    // Alert acknowledgement / resolution routes
+    "/api/alerts",
+    // Store listing used by multiple pages
+    "/api/stores",
+    // Store room management
+    "/api/store-rooms",
+    // Notifications
+    "/api/notifications",
+    // Supplier PO routes
+    "/api/supplier-po",
   ];
   
   return authHandledRoutes.some(route => pathname.startsWith(route));
