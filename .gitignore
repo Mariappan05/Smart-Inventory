@@ -36,6 +36,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -44,5 +45,65 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
-.env*
+# Documentation and summary files (exclude from repo)
+*.md
+!README.md
+SUMMARY.md
+summary.md
+docs/
+
+# Log files
+*.log
+*.txt
+!.vercel/README.txt
+
+# Temporary files
+temp.*
+*.tmp
+*.bak
+
+# Build cache
+.turbopack/
+.cache/
+
+# Scripts (one-time use)
+*.ps1
+*.cjs
+*.js
+!next.config.js
+!next.config.ts
+!postcss.config.mjs
+!eslint.config.mjs
+
+# Backup and test files
+*.old
+*.backup
+*_backup.*
+test-*.js
+verify-*.js
+verify-*.ts
+check-*.js
+check-*.ts
+assign-*.js
+fix-*.js
+list-*.js
+find-*.js
+set-*.js
+update-*.js
+cleanup-*.js
+quick-*.js
+
+# SQL files (one-time migrations)
+*.sql
+
+# Server files (not needed for Vercel)
+server.ts
+tunnel.js
+
+# Legacy folders
+prisma/migrations_legacy/
+api/
+
+# Build outputs
+build_*.log
+build_*.txt
