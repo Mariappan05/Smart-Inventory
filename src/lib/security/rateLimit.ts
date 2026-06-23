@@ -62,12 +62,15 @@ export function checkRateLimit(
   entry.count++;
 
   // Check if limit exceeded
-  const maxLimit = type === "login" ? config.maxAttempts : (config as any).maxRequests;
+  const maxLimit = type === "login" 
+    ? (config as { maxAttempts: number }).maxAttempts 
+    : (config as { maxRequests: number }).maxRequests;
   
   if (entry.count > maxLimit) {
     // Block for login attempts
-    if (type === "login" && "blockDuration" in config) {
-      entry.blockedUntil = now + config.blockDuration;
+    if (type === "login") {
+      const loginConfig = config as { blockDuration: number };
+      entry.blockedUntil = now + loginConfig.blockDuration;
     }
     
     rateLimitStore.set(key, entry);
@@ -99,6 +102,11 @@ export function rateLimitMiddleware(type: RateLimitType = "api") {
         ? Math.ceil((result.blockedUntil - Date.now()) / 1000)
         : Math.ceil((result.resetAt - Date.now()) / 1000);
 
+      const config = securityConfig.rateLimit[type];
+      const maxLimit = type === "login" 
+        ? (config as { maxAttempts: number }).maxAttempts 
+        : (config as { maxRequests: number }).maxRequests;
+
       return NextResponse.json(
         {
           success: false,
@@ -112,9 +120,7 @@ export function rateLimitMiddleware(type: RateLimitType = "api") {
           status: 429,
           headers: {
             "Retry-After": retryAfter.toString(),
-            "X-RateLimit-Limit": type === "login" 
-              ? securityConfig.rateLimit.login.maxAttempts.toString()
-              : securityConfig.rateLimit.api.maxRequests.toString(),
+            "X-RateLimit-Limit": maxLimit.toString(),
             "X-RateLimit-Remaining": result.remaining.toString(),
             "X-RateLimit-Reset": new Date(result.resetAt).toISOString(),
           },
