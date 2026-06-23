@@ -80,9 +80,13 @@ export function ModernDropdown({
   // Filter options
   const filteredOptions = searchable
     ? options.filter(
-        (option) =>
-          option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          option.subtitle?.toLowerCase().includes(searchTerm.toLowerCase())
+        (option) => {
+          const label = String(option?.label || '');
+          const subtitle = String(option?.subtitle || '');
+          const search = searchTerm.toLowerCase();
+          return label.toLowerCase().includes(search) ||
+                 subtitle.toLowerCase().includes(search);
+        }
       )
     : options;
 

@@ -91,6 +91,24 @@ export function ReportViews() {
   const columns = report?.data?.[0] ? Object.keys(report.data[0]) : [];
   const totalPages = report?.totalPages ?? 1;
 
+  /** Safely convert any cell value to a renderable string. */
+  const formatCellValue = (value: unknown): string => {
+    if (value === null || value === undefined) return "-";
+    if (typeof value === "string") return value || "-";
+    if (typeof value === "number" || typeof value === "boolean") return String(value);
+    if (value instanceof Date) return value.toISOString();
+    // Nested object (e.g., { value, label } or a Prisma relation) — pick
+    // a sensible display property or fall back to JSON.
+    if (typeof value === "object") {
+      const obj = value as Record<string, unknown>;
+      for (const key of ["label", "name", "title", "value"]) {
+        if (typeof obj[key] === "string" && obj[key]) return obj[key] as string;
+      }
+      return JSON.stringify(value);
+    }
+    return String(value);
+  };
+
   return (
     <div className="space-y-6">
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-panel sm:p-6 dark:border-slate-700 dark:bg-slate-900/70">
@@ -161,7 +179,7 @@ export function ReportViews() {
                   <tr key={index} className="border-t border-slate-200 dark:border-slate-800">
                     {columns.map((column) => (
                       <td key={column} className="whitespace-nowrap px-3 sm:px-4 py-3 text-xs sm:text-sm text-slate-700 dark:text-slate-200">
-                        {String(row[column] ?? "-")}
+                        {formatCellValue(row[column])}
                       </td>
                     ))}
                   </tr>

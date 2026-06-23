@@ -55,6 +55,9 @@ const allNavItems = [
   // Production Entry - Sub Store, Admin, Store Manager
   { label: "Production Entry", icon: Package, href: "/production", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"] },
   
+  // Component Production History - Sub Store, Admin, Store Manager
+  { label: "Production History", icon: FileText, href: "/production-history", roles: ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER", "EMPLOYEE"] },
+  
   // Maintenance - Admin, Store Manager
   { label: "Maintenance", icon: Wrench, href: "/maintenance", roles: ["ADMIN", "STORE_MANAGER"] },
   

@@ -12,6 +12,7 @@ interface StoreOption {
 interface MachineEntryFormProps {
   storeName: string;
   storeCode: string;
+  storeId: string;
   machineName: string;
   machineCode: string;
   onStoreChange: (storeName: string, storeCode: string, storeId: string) => void;
@@ -25,6 +26,7 @@ interface MachineEntryFormProps {
 export function MachineEntryForm({
   storeName,
   storeCode,
+  storeId,
   machineName,
   machineCode,
   onStoreChange,
@@ -97,7 +99,7 @@ export function MachineEntryForm({
             label="Store Name"
             required
             options={storeOptions}
-            value={storeName}
+            value={storeId}
             onChange={(value) => handleStoreSelect(value as string)}
             placeholder="Select a store..."
             searchPlaceholder="Search stores..."

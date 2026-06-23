@@ -4,7 +4,18 @@ import { useEffect } from "react";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    console.error(error);
+    // Safely log error without causing React rendering issues
+    try {
+      if (error?.message) {
+        console.error('Error:', error.message);
+      } else if (typeof error === 'string') {
+        console.error('Error:', error);
+      } else {
+        console.error('An error occurred');
+      }
+    } catch (e) {
+      console.error('An error occurred');
+    }
   }, [error]);
 
   return (

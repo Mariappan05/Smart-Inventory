@@ -19,8 +19,10 @@ interface ProductionEntryFormProps {
   date: string;
   storeName: string;
   storeCode: string;
+  storeId: string;
   machineName: string;
   machineCode: string;
+  machineId: string;
   componentName: string;
   componentCode: string;
   operation: string;
@@ -44,8 +46,10 @@ export function ProductionEntryForm({
   date,
   storeName,
   storeCode,
+  storeId,
   machineName,
   machineCode,
+  machineId,
   componentName,
   componentCode,
   operation,
@@ -200,7 +204,7 @@ export function ProductionEntryForm({
             label="Store Name"
             required
             options={storeOptions}
-            value={storeName}
+            value={storeId}
             onChange={(value) => handleStoreSelect(value as string)}
             placeholder="Select a store..."
             searchPlaceholder="Search stores..."
@@ -235,7 +239,7 @@ export function ProductionEntryForm({
             label="Machine Name"
             required
             options={machineOptions}
-            value={machineName}
+            value={machineId}
             onChange={(value) => handleMachineSelect(value as string)}
             placeholder="Select a machine..."
             searchPlaceholder="Search machines..."
