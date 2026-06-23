@@ -43,6 +43,9 @@ function isAuthHandledByRoute(pathname: string) {
     "/api/plants",
     // Production routes (history, component-codes, batch, etc.)
     "/api/production",
+    // Top-level collision-free routes (avoid [id] dynamic segment swallowing them)
+    "/api/production-component-codes",
+    "/api/production-history",
     // Report export / generation routes
     "/api/reports",
     // Alert acknowledgement / resolution routes

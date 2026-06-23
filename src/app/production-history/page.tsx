@@ -192,7 +192,7 @@ export default function ProductionHistoryPage() {
   /* ── Load component codes from Products ── */
   const loadComponentCodes = useCallback(async () => {
     try {
-      const res = await fetch('/api/production/component-codes');
+      const res = await fetch('/api/production-component-codes');
       if (!res.ok) throw new Error('Failed to fetch component codes');
       const data = await res.json();
 
@@ -224,7 +224,7 @@ export default function ProductionHistoryPage() {
 
     try {
       const res = await fetch(
-        `/api/production/history?componentCode=${encodeURIComponent(selectedCode)}`
+        `/api/production-history?componentCode=${encodeURIComponent(selectedCode)}`
       );
       if (!res.ok) throw new Error('Failed to fetch production history');
 
