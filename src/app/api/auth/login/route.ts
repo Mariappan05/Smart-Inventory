@@ -1,10 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AuthController } from "@/controllers/authController";
 import { authCookieName, authCookieOptions } from "@/lib/auth/session";
+import { getRateLimitKey, checkRateLimit, clearRateLimit } from "@/lib/security/rateLimit";
+import { auditLogger, AuditEventType } from "@/lib/security/audit";
+import { sanitizeEmail, validateInput } from "@/lib/security/validation";
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting check
+    const rateLimitKey = getRateLimitKey(request, "login");
+    const rateLimit = checkRateLimit(rateLimitKey, "login");
+    
+    if (!rateLimit.allowed) {
+      const retryAfter = rateLimit.blockedUntil 
+        ? Math.ceil((rateLimit.blockedUntil - Date.now()) / 1000)
+        : Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
+
+      await auditLogger.log({
+        eventType: AuditEventType.RATE_LIMIT_EXCEEDED,
+        ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || undefined,
+        resource: "auth/login",
+        success: false,
+        errorMessage: "Rate limit exceeded",
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: rateLimit.blockedUntil 
+            ? `Too many failed login attempts. Please try again after ${Math.ceil(retryAfter / 60)} minutes.`
+            : "Too many login attempts. Please try again later.",
+          retryAfter,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": retryAfter.toString(),
+          },
+        }
+      );
+    }
+
     const body = (await request.json()) as { identifier?: string; password?: string; rememberMe?: boolean };
+    const ipAddress = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || undefined;
 
     console.log("[Login] Received login request for:", body.identifier);
 

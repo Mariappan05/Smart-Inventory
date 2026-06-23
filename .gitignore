@@ -48,6 +48,8 @@ next-env.d.ts
 # Documentation and summary files (exclude from repo)
 *.md
 !README.md
+!SECURITY.md
+!SECURITY_QUICKSTART.md
 SUMMARY.md
 summary.md
 docs/

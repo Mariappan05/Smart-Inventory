@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { authCookieName } from "@/lib/auth/session";
 import { canAccessPath, type UserRole } from "@/lib/auth/permissions";
+import { applySecurityHeaders } from "@/lib/security/helmet";
+import { getClientIP, isIPBlacklisted } from "@/lib/security/ipFilter";
+import { auditLogger, AuditEventType } from "@/lib/security/audit";
 
 const publicPaths = new Set(["/login", "/api/auth/login", "/api/auth/logout", "/api/auth/session"]);
 
@@ -46,6 +49,23 @@ function isAuthHandledByRoute(pathname: string) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isApiRoute = pathname.startsWith("/api/");
+  
+  // IP blacklist check
+  const clientIP = getClientIP(request);
+  if (isIPBlacklisted(clientIP)) {
+    await auditLogger.log({
+      eventType: AuditEventType.ACCESS_DENIED,
+      ipAddress: clientIP,
+      resource: pathname,
+      success: false,
+      errorMessage: "Blacklisted IP",
+    });
+    
+    return NextResponse.json(
+      { success: false, message: "Access denied" },
+      { status: 403 }
+    );
+  }
 
   if (isPublicPath(pathname)) {
     return NextResponse.next();
@@ -114,9 +134,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  return applySecurityHeaders(response);
 }
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|.well-known).*)"],
+  runtime: "nodejs",
 };
