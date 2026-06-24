@@ -74,7 +74,6 @@ export async function PATCH(
       data: updated,
     });
   } catch (error: any) {
-    console.error("Failed to update product:", error);
     return NextResponse.json(
       { success: false, error: "Failed to update product" },
       { status: 500 }
@@ -121,7 +120,6 @@ export async function DELETE(
       message: "Product deleted successfully",
     });
   } catch (error: any) {
-    console.error("Failed to delete product:", error);
 
     if (error?.code === "P2003") {
       return NextResponse.json(

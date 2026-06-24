@@ -125,7 +125,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: supplier });
   } catch (error) {
-    console.error("Failed to create supplier:", error);
     return NextResponse.json(
       { success: false, message: "Failed to create supplier" },
       { status: 500 }

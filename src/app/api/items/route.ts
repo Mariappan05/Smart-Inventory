@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: items });
   } catch (error) {
-    console.error("Failed to fetch items:", error);
     return NextResponse.json({ success: false, error: "Failed to fetch items" }, { status: 500 });
   }
 }
@@ -162,7 +161,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: item }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create item:", error);
     return NextResponse.json(
       { success: false, error: "Failed to create item", message: "Failed to create item" },
       { status: 500 }

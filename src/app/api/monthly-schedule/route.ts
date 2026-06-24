@@ -32,7 +32,28 @@ export async function GET(request: NextRequest) {
         scheduleType: true,
         status: true,
         createdAt: true,
-        store: { select: { id: true, name: true } },
+        supplierBillNumber: true,
+        unitPrice: true,
+        totalPrice: true,
+        gstAmount: true,
+        totalWithGst: true,
+        notes: true,
+        supplier: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            address: true,
+          },
+        },
+        item: {
+          select: {
+            id: true,
+            name: true,
+            itemCode: true,
+          },
+        },
+        store: { select: { id: true, name: true, code: true } },
       },
     });
 
@@ -41,7 +62,6 @@ export async function GET(request: NextRequest) {
       schedules,
     });
   } catch (error) {
-    console.error("Error fetching schedules:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch schedules" },
       { status: 500 }

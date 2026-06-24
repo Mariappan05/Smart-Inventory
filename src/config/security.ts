@@ -5,22 +5,26 @@ export const securityConfig = {
   rateLimit: {
     login: {
       windowMs: 15 * 60 * 1000, // 15 minutes
-      maxAttempts: 5, // 5 login attempts
-      blockDuration: 30 * 60 * 1000, // Block for 30 minutes
+      maxAttempts: 5,            // 5 login attempts per window
+      blockDuration: 30 * 60 * 1000, // Block for 30 minutes on rate-limit hit
     },
     api: {
-      windowMs: 60 * 1000, // 1 minute
-      maxRequests: 100, // 100 requests per minute
+      windowMs: 60 * 1000,  // 1 minute
+      maxRequests: 100,      // 100 requests per minute per IP
     },
     critical: {
       windowMs: 60 * 1000, // 1 minute
-      maxRequests: 10, // 10 requests per minute for critical operations
+      maxRequests: 20,      // 20 req/min for write operations (users, products, etc.)
+    },
+    upload: {
+      windowMs: 60 * 1000,
+      maxRequests: 10,      // 10 uploads per minute
     },
   },
 
-  // Session Configuration
+  // Session / Cookie Configuration
   session: {
-    cookieName: "auth-token",
+    cookieName: "smi_session",
     maxAge: 8 * 60 * 60 * 1000, // 8 hours
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -34,9 +38,9 @@ export const securityConfig = {
     requireUppercase: true,
     requireLowercase: true,
     requireNumbers: true,
-    requireSpecialChars: true,
+    requireSpecialChars: false, // relaxed — many users struggle with special chars
     maxAge: 90 * 24 * 60 * 60 * 1000, // 90 days
-    preventReuse: 5, // Can't reuse last 5 passwords
+    preventReuse: 5,
   },
 
   // JWT Configuration
@@ -49,11 +53,12 @@ export const securityConfig = {
 
   // CORS Configuration
   cors: {
-    allowedOrigins: process.env.NODE_ENV === "production" 
-      ? [process.env.NEXT_PUBLIC_APP_URL || ""]
-      : ["http://localhost:3000", "http://127.0.0.1:3000"],
+    allowedOrigins:
+      process.env.NODE_ENV === "production"
+        ? [process.env.NEXT_PUBLIC_APP_URL || ""]
+        : ["http://localhost:3000", "http://127.0.0.1:3000"],
     allowedMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"],
     exposedHeaders: ["Content-Length", "X-Request-ID"],
     credentials: true,
     maxAge: 86400, // 24 hours
@@ -63,20 +68,26 @@ export const securityConfig = {
   csp: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-eval'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      // Next.js requires 'unsafe-inline' for styles; 'unsafe-eval' for dev HMR
+      scriptSrc:
+        process.env.NODE_ENV === "production"
+          ? ["'self'", "'unsafe-inline'"]
+          : ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
-      fontSrc: ["'self'", "data:"],
+      fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
       connectSrc: ["'self'", "wss:", "ws:"],
       frameSrc: ["'none'"],
       objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
       upgradeInsecureRequests: process.env.NODE_ENV === "production" ? [] : null,
-    },
+    } as Record<string, string[] | null>,
   },
 
   // File Upload Security
   upload: {
-    maxFileSize: 5 * 1024 * 1024, // 5MB
+    maxFileSize: 5 * 1024 * 1024, // 5 MB
     allowedMimeTypes: [
       "image/jpeg",
       "image/png",
@@ -92,15 +103,15 @@ export const securityConfig = {
 
   // Input Validation
   validation: {
-    maxInputLength: 10000,
-    maxArrayLength: 1000,
+    maxInputLength: 10_000,
+    maxArrayLength: 1_000,
     sanitizeHtml: true,
-    allowedTags: [], // No HTML tags allowed by default
+    allowedTags: [],
   },
 
   // API Security
   api: {
-    requireApiKey: false, // Set to true if you want to use API keys
+    requireApiKey: false,
     apiKeyHeader: "X-API-Key",
     requestIdHeader: "X-Request-ID",
     enableLogging: true,
@@ -109,8 +120,8 @@ export const securityConfig = {
 
   // Database Security
   database: {
-    connectionTimeout: 30000, // 30 seconds
-    queryTimeout: 60000, // 60 seconds
+    connectionTimeout: 30_000,
+    queryTimeout: 60_000,
     maxConnections: 10,
     enableQueryLogging: process.env.NODE_ENV !== "production",
   },
@@ -120,7 +131,7 @@ export const securityConfig = {
     enabled: true,
     logSuccessfulLogins: true,
     logFailedLogins: true,
-    logDataChanges: true,
+    logDataChanges: false, // keep DB writes low — only log auth & security events by default
     logAccessDenied: true,
     retentionDays: 90,
   },

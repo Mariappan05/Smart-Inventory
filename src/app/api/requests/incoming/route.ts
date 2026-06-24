@@ -110,7 +110,6 @@ export async function GET(request: NextRequest) {
       data: requestsWithUsers,
     });
   } catch (error) {
-    console.error("Error fetching incoming requests:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch incoming requests" },
       { status: 500 }

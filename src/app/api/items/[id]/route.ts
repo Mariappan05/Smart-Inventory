@@ -31,7 +31,6 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: item });
   } catch (error) {
-    console.error("Failed to fetch item:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch item" },
       { status: 500 }
@@ -139,7 +138,6 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: updatedItem }, { status: 200 });
   } catch (error) {
-    console.error("Failed to update item:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update item" },
       { status: 500 }

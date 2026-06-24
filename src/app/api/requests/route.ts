@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: requests });
   } catch (error) {
-    console.error("Failed to fetch requests:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch requests" },
       { status: 500 }
@@ -84,7 +83,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: toolRequest });
   } catch (error) {
-    console.error("Failed to create request:", error);
     return NextResponse.json(
       { success: false, error: "Failed to create request" },
       { status: 500 }

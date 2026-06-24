@@ -99,7 +99,6 @@ export async function POST(request: NextRequest) {
       schedule,
     });
   } catch (error) {
-    console.error("Error creating schedule:", error);
     return NextResponse.json(
       { success: false, message: "Failed to create schedule" },
       { status: 500 }

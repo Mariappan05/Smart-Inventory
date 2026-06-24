@@ -90,7 +90,6 @@ export async function GET(request: NextRequest) {
       data: { productInfo, tools, productions },
     });
   } catch (error) {
-    console.error('Error fetching production history:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch production history' },
       { status: 500 }

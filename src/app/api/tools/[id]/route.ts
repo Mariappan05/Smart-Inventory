@@ -109,7 +109,6 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: updatedTool });
   } catch (error) {
-    console.error("Failed to update tool:", error);
     return NextResponse.json(
       { success: false, error: "Failed to update tool" },
       { status: 500 }
@@ -143,7 +142,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: "Tool deleted successfully" });
   } catch (error) {
-    console.error("Failed to delete tool:", error);
     return NextResponse.json(
       { success: false, error: "Failed to delete tool" },
       { status: 500 }

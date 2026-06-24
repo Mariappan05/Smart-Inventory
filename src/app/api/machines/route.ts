@@ -52,7 +52,6 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Failed to fetch machines:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch machines" },
       { status: 500 }

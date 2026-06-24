@@ -26,7 +26,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, data: po });
   } catch (error: any) {
-    console.error("Failed to delete supplier PO:", error);
     return NextResponse.json(
       { success: false, message: error.message || "Failed to delete supplier PO" },
       { status: 500 }

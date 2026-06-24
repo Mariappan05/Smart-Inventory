@@ -55,7 +55,6 @@ export async function GET(
       data: production,
     });
   } catch (error) {
-    console.error("Error fetching production:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch production record" },
       { status: 500 }
@@ -93,7 +92,6 @@ export async function DELETE(
       message: "Production record deleted successfully",
     });
   } catch (error) {
-    console.error("Error deleting production:", error);
     return NextResponse.json(
       { success: false, error: "Failed to delete production record" },
       { status: 500 }

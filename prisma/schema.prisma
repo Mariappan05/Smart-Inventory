@@ -532,6 +532,27 @@ model Production {
   @@index([createdById])
 }
 
+model AuditLog {
+  id           String   @id @default(cuid())
+  eventType    String
+  userId       String?
+  userEmail    String?
+  ipAddress    String?
+  userAgent    String?
+  resource     String?
+  action       String?
+  success      Boolean
+  errorMessage String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  @@index([eventType])
+  @@index([userId])
+  @@index([ipAddress])
+  @@index([createdAt])
+  @@index([success])
+}
+
 enum UserRole {
   ADMIN
   ADMIN_MANAGER

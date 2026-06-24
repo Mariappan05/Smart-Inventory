@@ -26,16 +26,12 @@ export async function GET(request: NextRequest) {
         });
         storeId = user?.storeId || null;
       } catch (dbError) {
-        console.error("[Monthly Schedule] Database error fetching user store:", dbError);
         return NextResponse.json(
           { success: false, error: "Database connection error. Please try again." },
           { status: 503 }
         );
       }
     }
-    
-    console.log("[Monthly Schedule Data] User ID:", session.userId);
-    console.log("[Monthly Schedule Data] Store ID:", storeId);
     
     if (!storeId) {
       return NextResponse.json(
@@ -48,7 +44,6 @@ export async function GET(request: NextRequest) {
 
     // Get unique customer names from products (Items with PRODUCT_ prefix)
     if (action === "customer-names") {
-      console.log("[Monthly Schedule Data] Fetching customer names for store:", storeId);
       
       try {
         const items = await prisma.item.findMany({
@@ -63,8 +58,6 @@ export async function GET(request: NextRequest) {
           },
         });
 
-        console.log("[Monthly Schedule Data] Found items:", items.length);
-
         // Extract unique customer names
         const customerNamesSet = new Set<string>();
         items.forEach((item) => {
@@ -75,11 +68,9 @@ export async function GET(request: NextRequest) {
         });
 
         const customerNames = Array.from(customerNamesSet).sort();
-        console.log("[Monthly Schedule Data] Unique customer names:", customerNames);
 
         return NextResponse.json({ success: true, data: customerNames });
       } catch (error) {
-        console.error("[Monthly Schedule Data] Error fetching customer names:", error);
         return NextResponse.json(
           { success: false, error: "Failed to fetch customer names. Database may be unavailable." },
           { status: 503 }
@@ -114,7 +105,6 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({ success: true, data: components });
       } catch (error) {
-        console.error("[Monthly Schedule Data] Error fetching components:", error);
         return NextResponse.json(
           { success: false, error: "Failed to fetch components. Database may be unavailable." },
           { status: 503 }
@@ -153,7 +143,6 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({ success: true, data: tools });
       } catch (error) {
-        console.error("[Monthly Schedule Data] Error fetching tools:", error);
         return NextResponse.json(
           { success: false, error: "Failed to fetch tools. Database may be unavailable." },
           { status: 503 }
@@ -166,7 +155,6 @@ export async function GET(request: NextRequest) {
       { status: 400 }
     );
   } catch (error) {
-    console.error("Failed to fetch monthly schedule data:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     
     if (errorMessage.includes("P1001") || errorMessage.includes("Can't reach database")) {

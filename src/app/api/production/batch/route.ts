@@ -63,7 +63,6 @@ export async function POST(request: NextRequest) {
       message: `${createdProductions.length} production record(s) created successfully`,
     });
   } catch (error) {
-    console.error("Failed to create production records:", error);
     return NextResponse.json(
       { success: false, error: "Failed to create production records" },
       { status: 500 }

@@ -46,7 +46,6 @@ export async function POST(
       schedule,
     });
   } catch (error) {
-    console.error("Error closing schedule:", error);
     return NextResponse.json(
       { success: false, message: "Failed to close schedule" },
       { status: 500 }

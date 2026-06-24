@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET(request: Request) {
   const cookieStore = await cookies();
   const token = cookieStore.get(authCookieName)?.value;
+
   if (!token) {
     return NextResponse.json({ authenticated: false }, { status: 401 });
   }
@@ -14,21 +15,19 @@ export async function GET(request: Request) {
   const controller = new AuthController();
   try {
     const payload = await controller.validateSession(token);
-    
-    // Check if client needs detailed user info (from query param)
+
     const url = new URL(request.url);
     const includeDetails = url.searchParams.get("details") === "true";
-    
+
     let name = payload.name ?? null;
     let imageUrl = null;
     let store = null;
-    
-    // Only fetch from database if details are explicitly requested
+
     if (includeDetails) {
       try {
-        const user = await prisma.user.findUnique({ 
-          where: { id: payload.sub }, 
-          select: { 
+        const user = await prisma.user.findUnique({
+          where: { id: payload.sub },
+          select: {
             name: true,
             storeId: true,
             images: {
@@ -37,37 +36,31 @@ export async function GET(request: Request) {
               take: 1,
             },
             store: {
-              select: {
-                id: true,
-                code: true,
-                name: true,
-              },
+              select: { id: true, code: true, name: true },
             },
           },
         });
-        
+
         if (user) {
           name = user.name;
           imageUrl = user.images?.[0]?.url || null;
           store = user.store;
         }
-      } catch (dbError) {
-        console.warn("[Session] Database error fetching user details, using token payload", dbError);
-        // Continue with token payload data if database fails
+      } catch {
+        // Database unavailable — fall back to token payload data
       }
     }
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       authenticated: true,
       success: true,
-      userId: payload.sub, 
-      role: payload.role, 
+      userId: payload.sub,
+      role: payload.role,
       name,
       imageUrl,
       store,
     });
-  } catch (error) {
-    console.error("[Session] Validation error:", error);
+  } catch {
     return NextResponse.json({ authenticated: false }, { status: 401 });
   }
 }

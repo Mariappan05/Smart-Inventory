@@ -60,7 +60,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: componentCodes });
   } catch (error) {
-    console.error('Error fetching component codes:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch component codes' },
       { status: 500 }

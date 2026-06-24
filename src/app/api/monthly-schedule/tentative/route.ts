@@ -10,7 +10,12 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { customerName, items: scheduleItems } = body;
+    let { customerName, items: scheduleItems } = body;
+
+    // Fallback to customerName from first item if not provided at top-level
+    if ((!customerName || !customerName.trim()) && scheduleItems && scheduleItems.length > 0) {
+      customerName = scheduleItems[0].customerName;
+    }
 
     // Validation
     if (!customerName || !customerName.trim()) {
@@ -100,7 +105,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: schedule });
   } catch (error) {
-    console.error("Failed to create tentative monthly schedule:", error);
     return NextResponse.json(
       { success: false, error: "Failed to create tentative monthly schedule" },
       { status: 500 }
@@ -196,10 +200,41 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: schedules });
   } catch (error) {
-    console.error("Failed to fetch tentative monthly schedules:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch tentative monthly schedules" },
       { status: 500 }
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  const authResult = await requireAuth(request);
+  if (authResult instanceof NextResponse) return authResult;
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Tentative schedule ID is required" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.tentativeMonthlySchedule.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Tentative monthly schedule deleted successfully",
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to delete tentative schedule" },
+      { status: 500 }
+    );
+  }
+}
+

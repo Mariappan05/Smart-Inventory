@@ -29,7 +29,6 @@ export async function GET(request: NextRequest) {
       data: { count },
     });
   } catch (error) {
-    console.error("Error fetching incoming requests count:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch count" },
       { status: 500 }

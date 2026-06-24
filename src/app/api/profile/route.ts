@@ -18,13 +18,9 @@ async function getSession() {
 }
 
 export async function GET() {
-  console.log('[Profile API] GET request received');
   try {
     const session = await getSession();
-    console.log('[Profile API] Session:', session ? 'Found' : 'Not found');
     if (!session) return NextResponse.json({ success: false }, { status: 401 });
-
-    console.log('[Profile API] Fetching user:', session.sub);
     const user = await prisma.user.findUnique({
       where: { id: session.sub },
       select: { 
@@ -40,12 +36,9 @@ export async function GET() {
         images: { orderBy: [{ isPrimary: "desc" }, { createdAt: "desc" }] }
       },
     });
-
-    console.log('[Profile API] User found:', user ? 'Yes' : 'No');
     if (!user) return NextResponse.json({ success: false }, { status: 404 });
     return NextResponse.json({ success: true, data: user });
   } catch (error) {
-    console.error('[Profile API] Error:', error);
     return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "Server error" }, { status: 500 });
   }
 }

@@ -28,7 +28,6 @@ export async function POST(request: NextRequest) {
       result,
     });
   } catch (error) {
-    console.error("Error in schedule reminder endpoint:", error);
     return NextResponse.json(
       { success: false, message: "Failed to process reminders" },
       { status: 500 }
@@ -57,7 +56,6 @@ export async function GET(request: NextRequest) {
       result,
     });
   } catch (error) {
-    console.error("Error in schedule reminder endpoint:", error);
     return NextResponse.json(
       { success: false, message: "Failed to process reminders" },
       { status: 500 }

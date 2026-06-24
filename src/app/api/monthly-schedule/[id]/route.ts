@@ -58,7 +58,6 @@ export async function PUT(
       schedule,
     });
   } catch (error) {
-    console.error("Error updating schedule:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update schedule" },
       { status: 500 }
@@ -100,7 +99,6 @@ export async function DELETE(
       message: "Schedule deleted successfully",
     });
   } catch (error) {
-    console.error("Error deleting schedule:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete schedule" },
       { status: 500 }

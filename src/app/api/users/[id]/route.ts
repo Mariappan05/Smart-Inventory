@@ -129,7 +129,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       message: "User updated successfully",
     });
   } catch (error) {
-    console.error("Failed to update user:", error);
     return NextResponse.json(
       {
         success: false,
@@ -171,7 +170,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       message: "User deleted successfully",
     });
   } catch (error) {
-    console.error("Failed to delete user:", error);
     return NextResponse.json(
       {
         success: false,

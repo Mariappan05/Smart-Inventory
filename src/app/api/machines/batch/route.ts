@@ -50,7 +50,6 @@ export async function POST(request: NextRequest) {
       message: `${createdMachines.length} machine(s) created successfully`,
     });
   } catch (error) {
-    console.error("Failed to create machines:", error);
     return NextResponse.json(
       { success: false, error: "Failed to create machines" },
       { status: 500 }

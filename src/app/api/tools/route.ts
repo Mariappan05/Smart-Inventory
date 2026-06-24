@@ -60,7 +60,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: toolsWithParsedOperations });
   } catch (error) {
-    console.error("Failed to fetch tools:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch tools" },
       { status: 500 }
@@ -220,7 +219,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: tool });
   } catch (error) {
-    console.error("Failed to create tool:", error);
     if ((error as any).code === "P2002") {
       return NextResponse.json(
         { success: false, error: "A tool with the same name, product, and supplier code already exists" },

@@ -1,4 +1,4 @@
-// Audit Logging System
+// Audit Logging System — persists security events to AuditLog table
 import { prisma } from "@/lib/prisma";
 import { securityConfig } from "@/config/security";
 
@@ -31,7 +31,7 @@ export interface AuditLogEntry {
   action?: string;
   success: boolean;
   errorMessage?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   timestamp: Date;
 }
 
@@ -40,11 +40,10 @@ class AuditLogger {
   private flushInterval: NodeJS.Timeout | null = null;
 
   constructor() {
-    // Flush logs to database every 30 seconds
     if (securityConfig.audit.enabled) {
       this.flushInterval = setInterval(() => {
-        this.flush();
-      }, 30000);
+        this.flush().catch(() => {});
+      }, 30_000);
     }
   }
 
@@ -56,22 +55,11 @@ class AuditLogger {
       timestamp: new Date(),
     };
 
-    // Filter based on configuration
-    const shouldLog = this.shouldLog(logEntry);
-    if (!shouldLog) return;
+    if (!this.shouldLog(logEntry)) return;
 
     this.logs.push(logEntry);
 
-    // Console log in development
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`[AUDIT] ${logEntry.eventType}:`, {
-        userId: logEntry.userId,
-        resource: logEntry.resource,
-        success: logEntry.success,
-      });
-    }
-
-    // Flush immediately for critical events
+    // Flush immediately for critical events — don't wait for batch
     if (this.isCriticalEvent(logEntry.eventType)) {
       await this.flush();
     }
@@ -79,26 +67,13 @@ class AuditLogger {
 
   private shouldLog(entry: AuditLogEntry): boolean {
     const config = securityConfig.audit;
-
-    if (entry.eventType === AuditEventType.LOGIN_SUCCESS && !config.logSuccessfulLogins) {
-      return false;
-    }
-
-    if (entry.eventType === AuditEventType.LOGIN_FAILED && !config.logFailedLogins) {
-      return false;
-    }
-
+    if (entry.eventType === AuditEventType.LOGIN_SUCCESS && !config.logSuccessfulLogins) return false;
+    if (entry.eventType === AuditEventType.LOGIN_FAILED && !config.logFailedLogins) return false;
     if (
       [AuditEventType.DATA_CREATED, AuditEventType.DATA_UPDATED, AuditEventType.DATA_DELETED].includes(entry.eventType) &&
       !config.logDataChanges
-    ) {
-      return false;
-    }
-
-    if (entry.eventType === AuditEventType.ACCESS_DENIED && !config.logAccessDenied) {
-      return false;
-    }
-
+    ) return false;
+    if (entry.eventType === AuditEventType.ACCESS_DENIED && !config.logAccessDenied) return false;
     return true;
   }
 
@@ -109,6 +84,7 @@ class AuditLogger {
       AuditEventType.SUSPICIOUS_ACTIVITY,
       AuditEventType.PERMISSION_CHANGED,
       AuditEventType.USER_DELETED,
+      AuditEventType.RATE_LIMIT_EXCEEDED,
     ].includes(eventType);
   }
 
@@ -119,20 +95,30 @@ class AuditLogger {
     this.logs = [];
 
     try {
-      // In a real implementation, save to database
-      // For now, we'll just log to console in production
-      if (process.env.NODE_ENV === "production") {
-        console.log(`[AUDIT] Flushing ${logsToFlush.length} log entries`);
-      }
-
-      // You can implement database logging here
-      // await prisma.auditLog.createMany({ data: logsToFlush });
-    } catch (error) {
-      console.error("[AUDIT] Failed to flush logs:", error);
-      // Put logs back if flush failed
+      await prisma.auditLog.createMany({
+        data: logsToFlush.map((entry) => ({
+          eventType: entry.eventType,
+          userId: entry.userId ?? null,
+          userEmail: entry.userEmail ?? null,
+          ipAddress: entry.ipAddress ?? null,
+          userAgent: entry.userAgent ?? null,
+          resource: entry.resource ?? null,
+          action: entry.action ?? null,
+          success: entry.success,
+          errorMessage: entry.errorMessage ?? null,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          metadata: (entry.metadata ?? null) as any,
+          createdAt: entry.timestamp,
+        })),
+        skipDuplicates: true,
+      });
+    } catch {
+      // Put logs back if DB write failed — will retry on next interval
       this.logs.unshift(...logsToFlush);
     }
   }
+
+  // --- Convenience helpers ---
 
   async logLogin(userId: string, email: string, success: boolean, ipAddress?: string, errorMessage?: string): Promise<void> {
     await this.log({
@@ -176,7 +162,7 @@ class AuditLogger {
     eventType: AuditEventType.DATA_CREATED | AuditEventType.DATA_UPDATED | AuditEventType.DATA_DELETED,
     userId: string,
     resource: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     await this.log({
       eventType,
@@ -192,7 +178,7 @@ class AuditLogger {
     userId: string | undefined,
     description: string,
     ipAddress?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     await this.log({
       eventType: AuditEventType.SUSPICIOUS_ACTIVITY,
@@ -209,20 +195,20 @@ class AuditLogger {
       clearInterval(this.flushInterval);
       this.flushInterval = null;
     }
-    this.flush();
+    this.flush().catch(() => {});
   }
 }
 
 // Singleton instance
 export const auditLogger = new AuditLogger();
 
-// Cleanup on process exit (only in Node.js runtime)
+// Cleanup on process exit
 if (typeof process !== "undefined" && typeof process.on === "function") {
   try {
     process.on("beforeExit", () => {
       auditLogger.destroy();
     });
-  } catch (error) {
-    // Edge runtime doesn't support process.on, ignore
+  } catch {
+    // Edge runtime — ignore
   }
 }

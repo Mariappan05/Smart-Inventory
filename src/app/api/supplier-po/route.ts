@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: pos });
   } catch (error: any) {
-    console.error("Failed to fetch supplier POs:", error);
     return NextResponse.json(
       { success: false, message: error.message || "Failed to fetch supplier POs" },
       { status: 500 }
@@ -63,7 +62,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: po });
   } catch (error: any) {
-    console.error("Failed to create supplier PO:", error);
     return NextResponse.json(
       { success: false, message: error.message || "Failed to create supplier PO" },
       { status: 500 }

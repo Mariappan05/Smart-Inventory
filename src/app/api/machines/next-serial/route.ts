@@ -33,7 +33,6 @@ export async function GET() {
 
     return NextResponse.json({ serial });
   } catch (error) {
-    console.error("Failed to generate next serial:", error);
     return NextResponse.json(
       { error: "Failed to generate serial number" },
       { status: 500 }

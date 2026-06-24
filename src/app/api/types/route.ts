@@ -53,7 +53,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(types);
   } catch (error) {
-    console.error("Failed to fetch types:", error);
     return NextResponse.json({ error: "Failed to fetch types" }, { status: 500 });
   }
 }
@@ -123,7 +122,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: type }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create type:", error);
     return NextResponse.json(
       { success: false, error: "Failed to create type", message: "Failed to create type" },
       { status: 500 }

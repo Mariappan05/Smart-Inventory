@@ -30,7 +30,6 @@ export async function POST(request: NextRequest) {
       message: "Default store updated successfully",
     });
   } catch (error) {
-    console.error("Error setting default store:", error);
     return NextResponse.json(
       { success: false, error: "Failed to set default store" },
       { status: 500 }
@@ -49,7 +48,6 @@ export async function GET() {
       data: defaultStore,
     });
   } catch (error) {
-    console.error("Error fetching default store:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch default store" },
       { status: 500 }
