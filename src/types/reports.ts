@@ -1,4 +1,4 @@
-export type ReportType = "machines" | "movement" | "alerts" | "employees";
+export type ReportType = "productHistory" | "schedule" | "request";
 
 export type ReportFilters = {
   type: ReportType;
@@ -7,6 +7,16 @@ export type ReportFilters = {
   endDate?: string;
   page?: number;
   pageSize?: number;
+  storeId?: string;
+  customerName?: string;
+  supplierName?: string;
+  componentName?: string;
+  componentCode?: string;
+  productName?: string;
+  planNumber?: string;
+  status?: string;
+  userName?: string;
+  machineName?: string;
 };
 
 export type ReportMeta = {
@@ -22,55 +32,53 @@ export type ReportMeta = {
   endDate?: string;
 };
 
-export type MachineReportRow = {
-  id: string;
-  assetTag: string;
-  name: string;
+export type ProductHistoryRow = {
+  storeName: string;
+  storeCode: string;
+  customerName: string;
+  supplierName: string;
+  componentName: string;
+  componentCode: string;
+  productName: string;
+  productCode: string;
+  rawMaterialType: string;
+  rmSupplier: string;
+  rmPrice: string;
+  createdBy: string;
+  createdDate: string;
+};
+
+export type ScheduleReportRow = {
+  planNumber: string;
+  storeName: string;
+  customerName: string;
+  supplierName: string;
+  componentName: string;
+  componentCode: string;
+  toolName: string;
+  quantity: number;
+  planDate: string;
   status: string;
-  category: string;
-  supplier: string;
-  storeRoom: string;
-  serial: string;
-  purchaseDate: string | null;
-  updatedAt: string;
+  createdBy: string;
+  createdDate: string;
 };
 
-export type MovementReportRow = {
-  id: string;
-  machine: string;
-  assetTag: string;
-  movementType: string;
-  fromStoreRoom: string;
-  toStoreRoom: string;
-  employee: string;
-  notes: string;
-  movedAt: string;
-};
-
-export type AlertReportRow = {
-  id: string;
-  machine: string;
-  assetTag: string;
-  title: string;
-  severity: string;
+export type RequestReportRow = {
+  requestNumber: string;
+  storeName: string;
+  storeCode: string;
+  userName: string;
+  componentName: string;
+  componentCode: string;
+  machineName: string;
+  machineCode: string;
+  requestedQuantity: number;
+  approvedQuantity: string;
   status: string;
-  reportedBy: string;
-  createdAt: string;
-  resolvedAt: string | null;
-};
-
-export type EmployeeActivityRow = {
-  id: string;
-  employee: string;
-  employeeNo: string;
-  activityType: string;
-  machine: string;
-  detail: string;
-  occurredAt: string;
+  createdDate: string;
 };
 
 export type ReportDataset =
-  | { type: "machines"; rows: MachineReportRow[] }
-  | { type: "movement"; rows: MovementReportRow[] }
-  | { type: "alerts"; rows: AlertReportRow[] }
-  | { type: "employees"; rows: EmployeeActivityRow[] };
+  | { type: "productHistory"; rows: ProductHistoryRow[] }
+  | { type: "schedule"; rows: ScheduleReportRow[] }
+  | { type: "request"; rows: RequestReportRow[] };

@@ -8,12 +8,22 @@ const reportService = new ReportService();
 function getFilters(req: NextRequest) {
   const url = new URL(req.url);
   return {
-    type: (url.searchParams.get("type") || "machines") as ReportType,
+    type: (url.searchParams.get("type") || "productHistory") as ReportType,
     search: url.searchParams.get("search") || undefined,
     startDate: url.searchParams.get("startDate") || undefined,
     endDate: url.searchParams.get("endDate") || undefined,
     page: Number(url.searchParams.get("page") || "1"),
     pageSize: Number(url.searchParams.get("pageSize") || "10"),
+    storeId: url.searchParams.get("storeId") || undefined,
+    customerName: url.searchParams.get("customerName") || undefined,
+    supplierName: url.searchParams.get("supplierName") || undefined,
+    componentName: url.searchParams.get("componentName") || undefined,
+    componentCode: url.searchParams.get("componentCode") || undefined,
+    productName: url.searchParams.get("productName") || undefined,
+    planNumber: url.searchParams.get("planNumber") || undefined,
+    status: url.searchParams.get("status") || undefined,
+    userName: url.searchParams.get("userName") || undefined,
+    machineName: url.searchParams.get("machineName") || undefined,
   };
 }
 

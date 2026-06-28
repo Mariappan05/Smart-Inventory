@@ -19,10 +19,9 @@ export class ReportService {
 
   private getTitle(type: ReportType) {
     const titles: Record<ReportType, string> = {
-      machines: "Machine Reports",
-      movement: "IN/OUT Reports",
-      alerts: "Security Alert Reports",
-      employees: "Employee Activity Reports",
+      productHistory: "Product History Report",
+      schedule: "Schedule Report",
+      request: "Request Report",
     };
 
     return titles[type];
@@ -31,14 +30,12 @@ export class ReportService {
   async getReport(filters: ReportFilters, plantId?: string) {
     try {
       switch (filters.type) {
-        case "machines":
-          return await this.reportRepository.getMachineReport(filters, plantId);
-        case "movement":
-          return await this.reportRepository.getMovementReport(filters, plantId);
-        case "alerts":
-          return await this.reportRepository.getSecurityAlertReport(filters, plantId);
-        case "employees":
-          return await this.reportRepository.getEmployeeActivityReport(filters, plantId);
+        case "productHistory":
+          return await this.reportRepository.getProductHistoryReport(filters, plantId);
+        case "schedule":
+          return await this.reportRepository.getScheduleReport(filters, plantId);
+        case "request":
+          return await this.reportRepository.getRequestReport(filters, plantId);
       }
     } catch (error) {
       throw toServiceError(error, "Failed to fetch report");
