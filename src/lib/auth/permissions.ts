@@ -69,8 +69,8 @@ export const moduleAccess: Record<string, UserRole[]> = {
   // Production Entry - Sub Store, Admin, Store Manager
   "/production": ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER"],
   
-  // Production History - Sub Store, Admin, Store Manager, Employee
-  "/production-history": ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER", "EMPLOYEE"],
+  // Product Process - Sub Store, Admin, Store Manager, Employee
+  "/product-process": ["SUB_STORE_LOGIN", "ADMIN", "STORE_MANAGER", "EMPLOYEE"],
   
   // Store Rooms - Admin, Store Manager
   "/store-rooms": ["ADMIN", "STORE_MANAGER"],
@@ -119,7 +119,7 @@ export const rolePermissions: Record<UserRole, string[]> = {
     "/schedules",
     "/weekly-schedule",
     "/production",
-    "/production-history",
+    "/product-process",
     "/alerts",
     "/reports",
     "/profile",
@@ -128,7 +128,7 @@ export const rolePermissions: Record<UserRole, string[]> = {
   EMPLOYEE: [
     "/inward",
     "/outward",
-    "/production-history",
+    "/product-process",
     "/alerts",
     "/profile",
     "/",
@@ -149,7 +149,7 @@ export const rolePermissions: Record<UserRole, string[]> = {
     "/schedules",
     "/weekly-schedule",
     "/production",
-    "/production-history",
+    "/product-process",
     "/profile",
     "/",
   ],

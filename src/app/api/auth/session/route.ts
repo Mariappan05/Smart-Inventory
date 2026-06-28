@@ -22,6 +22,7 @@ export async function GET(request: Request) {
     let name = payload.name ?? null;
     let imageUrl = null;
     let store = null;
+    let pagePermissions: any[] = [];
 
     if (includeDetails) {
       try {
@@ -38,6 +39,15 @@ export async function GET(request: Request) {
             store: {
               select: { id: true, code: true, name: true },
             },
+            pagePermissions: {
+              select: {
+                pageName: true,
+                canView: true,
+                canCreate: true,
+                canEdit: true,
+                canDelete: true,
+              },
+            },
           },
         });
 
@@ -45,6 +55,7 @@ export async function GET(request: Request) {
           name = user.name;
           imageUrl = user.images?.[0]?.url || null;
           store = user.store;
+          pagePermissions = user.pagePermissions;
         }
       } catch {
         // Database unavailable — fall back to token payload data
@@ -59,6 +70,7 @@ export async function GET(request: Request) {
       name,
       imageUrl,
       store,
+      pagePermissions,
     });
   } catch {
     return NextResponse.json({ authenticated: false }, { status: 401 });

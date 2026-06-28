@@ -3,6 +3,30 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth/permissions";
 import { getStoreWhereClause, getStoreIdForCreate } from "@/lib/storeFiltering";
 
+/** Generate unique Item Code: first-letter prefix + 4-digit zero-padded number.
+ *  E.g., toolName "Drill Bit" → prefix "D" → D0001, D0002, … */
+async function generateItemCode(toolName: string): Promise<string> {
+  const prefix = toolName.trim().charAt(0).toUpperCase();
+  // Find all existing tool itemCodes that start with this prefix
+  const existing = await prisma.tool.findMany({
+    where: {
+      itemCode: { startsWith: prefix },
+    },
+    select: { itemCode: true },
+  });
+
+  // Extract numbers from codes like "D0001", "D0002"
+  let maxNum = 0;
+  for (const t of existing) {
+    if (t.itemCode) {
+      const num = parseInt(t.itemCode.slice(prefix.length), 10);
+      if (!isNaN(num) && num > maxNum) maxNum = num;
+    }
+  }
+  const nextNum = maxNum + 1;
+  return `${prefix}${String(nextNum).padStart(4, "0")}`;
+}
+
 export async function GET(request: NextRequest) {
   const authResult = await requireAuth(request);
   if (authResult instanceof NextResponse) return authResult;
@@ -190,10 +214,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Auto-generate unique Item Code based on first letter of toolName
+    const itemCode = await generateItemCode(toolName.trim());
+
     // Create tool
     const tool = await prisma.tool.create({
       data: {
         itemId: itemId.trim(),
+        itemCode,
         toolType: toolType.trim(),
         toolName: toolName.trim(),
         operations: operations.map((op: { name: string; lifeSpan: number }) => ({

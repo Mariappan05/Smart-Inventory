@@ -24,6 +24,7 @@ type Operation = {
 type Tool = {
   id: string;
   itemId: string;
+  itemCode?: string | null;
   toolType?: string;
   toolName: string;
   operations: Operation[];
@@ -112,8 +113,9 @@ export function ToolEntryView({ items }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [selectedProductTools, setSelectedProductTools] = useState<Tool[]>([]);
   const [editingToolId, setEditingToolId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<ToolFormData & { id?: string }>({
+  const [editForm, setEditForm] = useState<ToolFormData & { id?: string; itemCode?: string | null }>({
     id: undefined,
+    itemCode: undefined,
     itemId: "",
     toolType: "",
     toolName: "",
@@ -233,6 +235,7 @@ export function ToolEntryView({ items }: Props) {
     setEditingToolId(tool.id);
     setEditForm({
       id: tool.id,
+      itemCode: tool.itemCode,
       itemId: tool.itemId,
       toolType: tool.toolType || "",
       toolName: tool.toolName,
@@ -248,6 +251,7 @@ export function ToolEntryView({ items }: Props) {
     setEditingToolId(null);
     setEditForm({
       id: undefined,
+      itemCode: undefined,
       itemId: "",
       toolType: "",
       toolName: "",
@@ -1055,6 +1059,9 @@ export function ToolEntryView({ items }: Props) {
                 <th className="px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Product
                 </th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Item Code
+                </th>
                 <th className="hidden sm:table-cell px-3 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Tool Type
                 </th>
@@ -1081,7 +1088,7 @@ export function ToolEntryView({ items }: Props) {
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={11} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span className="text-sm">Loading tools...</span>
@@ -1090,7 +1097,7 @@ export function ToolEntryView({ items }: Props) {
                 </tr>
               ) : tools.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+                  <td colSpan={11} className="px-3 py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
                     No tools created yet
                   </td>
                 </tr>
@@ -1110,6 +1117,9 @@ export function ToolEntryView({ items }: Props) {
                     </td>
                     <td className="px-3 py-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                       {getItemName(tool.itemId)}
+                    </td>
+                    <td className="px-3 py-3 text-xs sm:text-sm font-mono text-slate-900 dark:text-slate-100 font-semibold">
+                      {tool.itemCode || "N/A"}
                     </td>
                     <td className="hidden sm:table-cell px-3 py-3 text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                       {tool.toolType}
@@ -1207,6 +1217,20 @@ export function ToolEntryView({ items }: Props) {
                 placeholder="Select tool type..."
                 searchPlaceholder="Search tool types..."
               />
+
+              {/* Item Code (Non-editable) */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Item Code
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  readOnly
+                  value={editForm.itemCode || "Auto-generated"}
+                  className="w-full rounded-lg border border-slate-300 bg-slate-100 px-4 py-2 text-slate-900 placeholder-slate-400 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-400 cursor-not-allowed font-mono"
+                />
+              </div>
 
               {/* Tool Name */}
               <div>

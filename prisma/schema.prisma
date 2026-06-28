@@ -41,6 +41,9 @@ model User {
   createdMachines Machine[]            @relation("MachineCreatedBy")
   createdProductions Production[]      @relation("ProductionCreatedBy")
   notifications  Notification[]
+  pagePermissions UserPagePermission[]
+  createdProcesses ProductProcess[]    @relation("ProcessCreatedBy")
+  unauthorizedExitLogs UnauthorizedExitLog[] @relation("ExitLogUser")
 
   @@index([role, isActive])
   @@index([storeId])
@@ -104,6 +107,7 @@ model Item {
   schedules         Schedule[]
   monthlyScheduleItems TentativeMonthlyScheduleItem[]
   tools             Tool[]
+  productProcesses  ProductProcess[] @relation("ProcessProduct")
 
   @@unique([itemCode, storeId])
   @@index([typeId])
@@ -115,6 +119,7 @@ model Supplier {
   id           String     @id @default(cuid())
   name         String     @unique
   code         String     @unique
+  gstNumber    String?   
   contactEmail String?   
   contactPhone String?   
   address      String?   
@@ -158,6 +163,8 @@ model Store {
   scanLogs      QrScanLog[]          @relation("ScanStore")
   machines      Machine[]            @relation("MachineStore")
   productions   Production[]         @relation("ProductionStore")
+  productProcesses ProductProcess[]  @relation("ProcessStore")
+  unauthorizedExitLogs UnauthorizedExitLog[] @relation("ExitLogStore")
 
   @@index([createdById])
 }
@@ -200,6 +207,7 @@ model Tool {
   id              String   @id @default(cuid())
   itemId          String
   item            Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemCode        String?  @unique
   toolType        String?
   toolName        String  
   operations      Json     @default("[]")
@@ -211,6 +219,7 @@ model Tool {
   createdById     String?
   createdBy       User?    @relation("ToolCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   monthlyScheduleItemTools TentativeMonthlyScheduleItemTool[]
+  productProcesses ProductProcess[] @relation("ProcessTool")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -481,6 +490,11 @@ model InwardEntry {
   barcode         String? 
   storeId         String?
   createdById     String?
+  status          String   @default("COMPLETED")
+  supplierName    String?
+  expectedQuantity Int?
+  receivedQuantity Int?
+  missingProducts Json?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -488,6 +502,7 @@ model InwardEntry {
   @@index([invoiceNumber])
   @@index([storeId])
   @@index([createdAt])
+  @@index([status])
 }
 
 model Machine {
@@ -617,4 +632,74 @@ enum RequestStatus {
   APPROVED
   REJECTED
   COMPLETED
+}
+
+model ProductProcess {
+  id              String   @id @default(cuid())
+  productId       String
+  product         Item     @relation("ProcessProduct", fields: [productId], references: [id], onDelete: Cascade)
+  partName        String
+  operation       String
+  machineType     String
+  holderType      String?
+  holderName      String?
+  collet          String?
+  colletType      String?
+  toolType        String
+  cutter          String?
+  toolId          String?
+  tool            Tool?    @relation("ProcessTool", fields: [toolId], references: [id], onDelete: SetNull)
+  toolName        String?
+  consumableScrew String?
+  consumable      String?
+  supplierName    String?
+  supplierCode    String?
+  storeId         String?
+  store           Store?   @relation("ProcessStore", fields: [storeId], references: [id], onDelete: SetNull)
+  createdById     String?
+  createdBy       User?    @relation("ProcessCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([productId])
+  @@index([storeId])
+  @@index([createdById])
+  @@index([toolId])
+}
+
+model UserPagePermission {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pageName  String
+  canCreate Boolean  @default(false)
+  canEdit   Boolean  @default(false)
+  canDelete Boolean  @default(false)
+  canView   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, pageName])
+  @@index([userId])
+}
+
+model UnauthorizedExitLog {
+  id          String    @id @default(cuid())
+  productName String
+  productCode String
+  storeName   String?
+  storeId     String?
+  store       Store?    @relation("ExitLogStore", fields: [storeId], references: [id], onDelete: SetNull)
+  userName    String?
+  userId      String?
+  user        User?     @relation("ExitLogUser", fields: [userId], references: [id], onDelete: SetNull)
+  reason      String?
+  detectedAt  DateTime  @default(now())
+  isResolved  Boolean   @default(false)
+  resolvedAt  DateTime?
+
+  @@index([storeId])
+  @@index([userId])
+  @@index([detectedAt])
+  @@index([isResolved])
 }

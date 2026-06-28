@@ -1,6 +1,39 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const tool = await prisma.tool.findUnique({
+      where: { id },
+      include: {
+        item: { select: { id: true, name: true, itemCode: true } },
+        store: { select: { id: true, name: true, code: true } },
+      },
+    });
+
+    if (!tool) {
+      return NextResponse.json({ success: false, error: "Tool not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...tool,
+        operations:
+          typeof tool.operations === "string"
+            ? JSON.parse(tool.operations)
+            : tool.operations,
+      },
+    });
+  } catch {
+    return NextResponse.json({ success: false, error: "Failed to fetch tool" }, { status: 500 });
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

@@ -64,11 +64,41 @@ export function OutwardView() {
   const [finalizedRecords, setFinalizedRecords] = useState<any[]>([]);
   const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
   const [emergencyNotificationShown, setEmergencyNotificationShown] = useState(false);
+  const [tools, setTools] = useState<any[]>([]);
 
-  // Fetch incoming requests on mount
+  const logUnauthorizedExit = async (productName: string, productCode: string) => {
+    try {
+      await fetch("/api/outward/unauthorized", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productName,
+          productCode,
+          reason: `Scanned "${productName}" (${productCode}) but expected "${selectedRequest?.items[0]?.toolName || "Unknown"}" for request ${selectedRequest?.id}`,
+        }),
+      });
+    } catch (error) {
+      console.error("Error logging unauthorized exit:", error);
+    }
+  };
+
+  // Fetch incoming requests and tools on mount
   useEffect(() => {
     fetchIncomingRequests();
+    fetchTools();
   }, []);
+
+  const fetchTools = async () => {
+    try {
+      const res = await fetch("/api/tools");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setTools(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching tools:", error);
+    }
+  };
 
   const fetchIncomingRequests = async () => {
     try {
@@ -195,11 +225,37 @@ export function OutwardView() {
         return;
       }
 
+      // Check if scanned barcode matches the authorized tool in the selected request
+      const expectedToolName = selectedRequest.items[0]?.toolName || "";
+      
+      const matchedTool = tools.find(
+        (t) => t.itemCode === barcodeScanInput || t.id === barcodeScanInput
+      );
+
+      let isAuthorized = false;
+      let productName = "Unknown Product";
+      let productCode = barcodeScanInput;
+
+      if (matchedTool) {
+        productName = matchedTool.toolName;
+        productCode = matchedTool.itemCode || matchedTool.id;
+        if (matchedTool.toolName.toLowerCase().trim() === expectedToolName.toLowerCase().trim()) {
+          isAuthorized = true;
+        }
+      }
+
+      if (!isAuthorized) {
+        toast.error(`ALERT: Unauthorized product exit attempt! Scanned: "${productName}" (${productCode})`);
+        logUnauthorizedExit(productName, productCode);
+        setBarcodeScanInput("");
+        return;
+      }
+
       const scannedProduct: ScannedProduct = {
         id: Date.now().toString(),
         barcode: barcodeScanInput,
-        toolName: selectedRequest.items[0]?.toolName || "Unknown",
-        toolCode: selectedRequest.items[0]?.toolCode || "N/A",
+        toolName: productName,
+        toolCode: productCode,
         quantity: 1,
         scanTime: new Date().toISOString(),
       };

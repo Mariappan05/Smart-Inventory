@@ -5,6 +5,12 @@ import { getStoreWhereClause, getStoreIdForCreate } from "@/lib/storeFiltering";
 
 const HARDCODED_TYPES = ["Insert", "Drill", "HSS Drill", "Reamer", "Endmill", "Holemill"];
 
+/** Validate Indian GSTIN format */
+function validateGSTIN(gst: string): boolean {
+  const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+  return gstinRegex.test(gst);
+}
+
 export async function GET(request: NextRequest) {
   const authResult = await requireAuth(request);
   if (authResult instanceof NextResponse) return authResult;
@@ -43,11 +49,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, code, contactEmail, contactPhone, address } = body;
+    const { name, code, gstNumber, contactEmail, contactPhone, address } = body;
 
     if (!name || !code) {
       return NextResponse.json(
         { success: false, message: "Name and code are required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate GST Number - mandatory & must be valid GSTIN
+    if (!gstNumber || !gstNumber.trim()) {
+      return NextResponse.json(
+        { success: false, message: "GST Number is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!validateGSTIN(gstNumber.trim().toUpperCase())) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid GST Number. Must be a valid 15-character Indian GSTIN format (e.g., 22AAAAA0000A1Z5)",
+        },
         { status: 400 }
       );
     }
@@ -63,10 +87,7 @@ export async function POST(request: NextRequest) {
 
     // Check for duplicate name within the same store
     const existingName = await prisma.supplier.findFirst({
-      where: { 
-        name,
-        storeId
-      },
+      where: { name, storeId },
     });
 
     if (existingName) {
@@ -82,10 +103,7 @@ export async function POST(request: NextRequest) {
 
     // Check for duplicate code within the same store
     const existingCode = await prisma.supplier.findFirst({
-      where: { 
-        code,
-        storeId
-      },
+      where: { code, storeId },
     });
 
     if (existingCode) {
@@ -103,6 +121,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         code,
+        gstNumber: gstNumber.trim().toUpperCase(),
         contactEmail: contactEmail || null,
         contactPhone: contactPhone || null,
         address: address || null,

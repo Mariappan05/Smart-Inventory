@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Upload, Loader2, CheckCircle, XCircle, Eye, Trash2 } from "lucide-react";
+import { Upload, Loader2, CheckCircle, XCircle, Eye, Trash2, Lock } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface SupplierPO {
@@ -25,6 +25,7 @@ export function SupplierPOView() {
   const [selectedPOId, setSelectedPOId] = useState<string | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     poNumber: "",
@@ -46,7 +47,14 @@ export function SupplierPOView() {
     fetchSuppliers();
     fetchTools();
     fetchPOs();
+    // Fetch user role
+    fetch("/api/auth/session")
+      .then(res => res.json())
+      .then(data => { if (data.role) setUserRole(data.role); })
+      .catch(() => {});
   }, []);
+
+  const isAdmin = userRole === "ADMIN";
 
   const fetchSuppliers = async () => {
     try {
@@ -304,33 +312,48 @@ export function SupplierPOView() {
               />
             </div>
 
-            {/* Unit Price */}
+            {/* Unit Price — ADMIN only editable */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
                 Unit Price
+                {!isAdmin && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"><Lock className="h-3 w-3" /> Admin Only</span>}
               </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.unitPrice}
-                onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
-                placeholder="Enter unit price"
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-              />
+              {isAdmin ? (
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.unitPrice}
+                  onChange={(e) => setFormData({ ...formData, unitPrice: e.target.value })}
+                  placeholder="Enter unit price"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                />
+              ) : (
+                <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  <span className="text-sm">Restricted — Admin access required</span>
+                </div>
+              )}
             </div>
 
-            {/* Total Amount */}
+            {/* Total Amount — ADMIN only */}
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Total Amount
               </label>
-              <input
-                type="number"
-                disabled
-                value={totalAmount}
-                className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-slate-900 cursor-not-allowed dark:border-slate-600 dark:bg-slate-700 dark:text-slate-400"
-              />
+              {isAdmin ? (
+                <input
+                  type="number"
+                  disabled
+                  value={totalAmount}
+                  className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-slate-900 cursor-not-allowed dark:border-slate-600 dark:bg-slate-700 dark:text-slate-400"
+                />
+              ) : (
+                <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  <span className="text-sm">Hidden</span>
+                </div>
+              )}
             </div>
 
             {/* Payment Terms */}
@@ -473,7 +496,9 @@ export function SupplierPOView() {
                     <td className="px-4 py-3 text-slate-900 dark:text-slate-100">{po.poNumber}</td>
                     <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{po.supplierName}</td>
                     <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                      {po.totalAmount ? `₹${po.totalAmount.toFixed(2)}` : "-"}
+                      {isAdmin
+                        ? po.totalAmount ? `₹${po.totalAmount.toFixed(2)}` : "-"
+                        : <span className="inline-flex items-center gap-1 text-xs text-slate-400"><Lock className="h-3 w-3" /> Hidden</span>}
                     </td>
                     <td className="px-4 py-3">
                       {po.pdfUrl ? (

@@ -24,11 +24,14 @@ interface SupplierPO {
 interface PendingInwardItem {
   id: string;
   product: Product;
-  quantity: number;
+  expectedQuantity: number;
+  receivedQuantity: number;
   poNumber: string;
   invoiceNumber: string;
   invoiceDate: string;
   invoicePrice?: number;
+  status: string;
+  missingProducts?: any[];
   poDetails?: {
     totalAmount?: number;
     supplierName?: string;
@@ -49,7 +52,8 @@ export function InwardView() {
     poNumber: "",
     invoiceDate: "",
     invoiceNumber: "",
-    quantity: "",
+    expectedQuantity: "",
+    receivedQuantity: "",
     invoicePrice: "",
     barcodeInput: "",
     productName: "",
@@ -59,7 +63,8 @@ export function InwardView() {
   const [selectedPoDetails, setSelectedPoDetails] = useState<SupplierPO | null>(null);
 
   const [editForm, setEditForm] = useState({
-    quantity: "",
+    expectedQuantity: "",
+    receivedQuantity: "",
     invoicePrice: "",
     invoiceNumber: "",
     invoiceDate: "",
@@ -185,8 +190,16 @@ export function InwardView() {
       toast.error("Please enter invoice number");
       return;
     }
-    if (!formData.quantity || parseInt(formData.quantity) <= 0) {
-      toast.error("Please enter valid quantity");
+    if (!formData.expectedQuantity || parseInt(formData.expectedQuantity) <= 0) {
+      toast.error("Please enter valid expected quantity");
+      return;
+    }
+    if (!formData.receivedQuantity || parseInt(formData.receivedQuantity) < 0) {
+      toast.error("Please enter valid received quantity");
+      return;
+    }
+    if (parseInt(formData.receivedQuantity) > parseInt(formData.expectedQuantity)) {
+      toast.error("Received quantity cannot exceed expected quantity");
       return;
     }
     if (!formData.invoicePrice || parseFloat(formData.invoicePrice) <= 0) {
@@ -216,6 +229,19 @@ export function InwardView() {
       return;
     }
 
+    const expected = parseInt(formData.expectedQuantity);
+    const received = parseInt(formData.receivedQuantity);
+    const status = received < expected ? "PENDING" : "COMPLETED";
+
+    const missingList = received < expected ? [
+      {
+        productName: formData.productName,
+        expectedQuantity: expected,
+        receivedQuantity: received,
+        missingQuantity: expected - received,
+      }
+    ] : [];
+
     const newItem: PendingInwardItem = {
       id: `temp-${Date.now()}`,
       product: {
@@ -223,11 +249,14 @@ export function InwardView() {
         name: formData.productName,
         code: "",
       },
-      quantity: parseInt(formData.quantity),
+      expectedQuantity: expected,
+      receivedQuantity: received,
       poNumber: formData.poNumber,
       invoiceNumber: formData.invoiceNumber,
       invoiceDate: formData.invoiceDate,
       invoicePrice: parseFloat(formData.invoicePrice),
+      status: status,
+      missingProducts: missingList,
       poDetails: selectedPoDetails ? {
         totalAmount: selectedPoDetails.totalAmount,
         supplierName: selectedPoDetails.supplierName,
@@ -242,7 +271,8 @@ export function InwardView() {
       poNumber: "",
       invoiceDate: "",
       invoiceNumber: "",
-      quantity: "",
+      expectedQuantity: "",
+      receivedQuantity: "",
       invoicePrice: "",
       barcodeInput: "",
       productName: "",
@@ -254,7 +284,8 @@ export function InwardView() {
   const handleEditItem = (item: PendingInwardItem) => {
     setEditingItemId(item.id);
     setEditForm({
-      quantity: item.quantity.toString(),
+      expectedQuantity: item.expectedQuantity.toString(),
+      receivedQuantity: item.receivedQuantity.toString(),
       invoicePrice: (item.invoicePrice || "").toString(),
       invoiceNumber: item.invoiceNumber,
       invoiceDate: item.invoiceDate,
@@ -265,9 +296,25 @@ export function InwardView() {
     setPendingItems((items) =>
       items.map((item) => {
         if (item.id === itemId) {
+          const expected = parseInt(editForm.expectedQuantity) || item.expectedQuantity;
+          const received = parseInt(editForm.receivedQuantity) || item.receivedQuantity;
+          const status = received < expected ? "PENDING" : "COMPLETED";
+
+          const missingList = received < expected ? [
+            {
+              productName: item.product.name,
+              expectedQuantity: expected,
+              receivedQuantity: received,
+              missingQuantity: expected - received,
+            }
+          ] : [];
+
           return {
             ...item,
-            quantity: parseInt(editForm.quantity) || item.quantity,
+            expectedQuantity: expected,
+            receivedQuantity: received,
+            status: status,
+            missingProducts: missingList,
             invoicePrice: parseFloat(editForm.invoicePrice) || item.invoicePrice,
             invoiceNumber: editForm.invoiceNumber,
             invoiceDate: editForm.invoiceDate,
@@ -300,11 +347,14 @@ export function InwardView() {
         body: JSON.stringify({
           items: pendingItems.map((item) => ({
             productName: item.product.name,
-            quantity: item.quantity,
+            expectedQuantity: item.expectedQuantity,
+            receivedQuantity: item.receivedQuantity,
             poNumber: item.poNumber,
             invoiceNumber: item.invoiceNumber,
             invoiceDate: item.invoiceDate,
             invoicePrice: item.invoicePrice,
+            status: item.status,
+            missingProducts: item.missingProducts,
             supplierName: item.poDetails?.supplierName,
           })),
         }),
@@ -419,17 +469,32 @@ export function InwardView() {
             />
           </div>
 
-          {/* Quantity */}
+          {/* Expected Quantity */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Invoice Quantity <span className="text-red-500">*</span>
+              Expected Quantity <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
               min="1"
-              value={formData.quantity}
-              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-              placeholder="Enter quantity"
+              value={formData.expectedQuantity}
+              onChange={(e) => setFormData({ ...formData, expectedQuantity: e.target.value })}
+              placeholder="Enter expected quantity"
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+            />
+          </div>
+
+          {/* Received Quantity */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Received Quantity <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={formData.receivedQuantity}
+              onChange={(e) => setFormData({ ...formData, receivedQuantity: e.target.value })}
+              placeholder="Enter received quantity"
               className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
             />
           </div>
@@ -520,7 +585,10 @@ export function InwardView() {
                     Invoice
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-slate-700 dark:text-slate-300">
-                    Quantity
+                    Expected Qty
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-700 dark:text-slate-300">
+                    Received Qty
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-slate-700 dark:text-slate-300">
                     Price
@@ -558,9 +626,20 @@ export function InwardView() {
                           <input
                             type="number"
                             min="1"
-                            value={editForm.quantity}
+                            value={editForm.expectedQuantity}
                             onChange={(e) =>
-                              setEditForm({ ...editForm, quantity: e.target.value })
+                              setEditForm({ ...editForm, expectedQuantity: e.target.value })
+                            }
+                            className="w-20 rounded border border-slate-300 px-2 py-1 dark:border-slate-600 dark:bg-slate-700"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <input
+                            type="number"
+                            min="0"
+                            value={editForm.receivedQuantity}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, receivedQuantity: e.target.value })
                             }
                             className="w-20 rounded border border-slate-300 px-2 py-1 dark:border-slate-600 dark:bg-slate-700"
                           />
@@ -612,8 +691,11 @@ export function InwardView() {
                         <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                           {item.invoiceNumber}
                         </td>
-                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                          {item.quantity}
+                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-semibold">
+                          {item.expectedQuantity}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-semibold">
+                          {item.receivedQuantity}
                         </td>
                         <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                           ${item.invoicePrice?.toFixed(2) || "0.00"}
@@ -656,11 +738,72 @@ export function InwardView() {
         </div>
       )}
 
+
+      {/* Pending Inward Bills List */}
+      {inwardRecords.some(r => r.status === "PENDING") && (
+        <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Pending Inward Bills ({inwardRecords.filter(r => r.status === "PENDING").length})
+            </h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="px-4 py-3 text-left font-medium text-slate-700 dark:text-slate-300">Product</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-700 dark:text-slate-300">PO Number</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-700 dark:text-slate-300">Invoice Number</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-700 dark:text-slate-300">Expected Qty</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-700 dark:text-slate-300">Received Qty</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-700 dark:text-slate-300">Missing Qty</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-700 dark:text-slate-300">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-700 dark:text-slate-300">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inwardRecords.filter(r => r.status === "PENDING").map((record) => {
+                  const expected = record.expectedQuantity || record.quantity || 0;
+                  const received = record.receivedQuantity || record.quantity || 0;
+                  const missing = expected - received;
+                  
+                  let productName = "Product";
+                  try {
+                    const parsed = typeof record.productDetails === "string" ? JSON.parse(record.productDetails) : record.productDetails;
+                    productName = parsed?.productName || record.productName || "Product";
+                  } catch {
+                    productName = record.productName || "Product";
+                  }
+
+                  return (
+                    <tr key={record.id} className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                      <td className="px-4 py-3 text-slate-900 dark:text-slate-100">{productName}</td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{record.poNumber}</td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{record.invoiceNumber}</td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-semibold">{expected}</td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-semibold">{received}</td>
+                      <td className="px-4 py-3 text-red-600 dark:text-red-400 font-bold">{missing}</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                          {record.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{formatDate(record.createdAt)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Finalized Records Table */}
-      {inwardRecords.length > 0 && (
+      {inwardRecords.filter(r => r.status !== "PENDING").length > 0 && (
         <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
-            Recorded Inward Items ({inwardRecords.length})
+            Recorded Inward Items ({inwardRecords.filter(r => r.status !== "PENDING").length})
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -684,25 +827,35 @@ export function InwardView() {
                 </tr>
               </thead>
               <tbody>
-                {inwardRecords.map((record) => (
-                  <tr key={record.id} className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                    <td className="px-4 py-3 text-slate-900 dark:text-slate-100">
-                      {record.productName || "Product"}
-                    </td>
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                      {record.quantity}
-                    </td>
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                      {record.poNumber}
-                    </td>
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                      {record.invoiceNumber}
-                    </td>
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                      {formatDate(record.createdAt)}
-                    </td>
-                  </tr>
-                ))}
+                {inwardRecords.filter(r => r.status !== "PENDING").map((record) => {
+                  let productName = "Product";
+                  try {
+                    const parsed = typeof record.productDetails === "string" ? JSON.parse(record.productDetails) : record.productDetails;
+                    productName = parsed?.productName || record.productName || "Product";
+                  } catch {
+                    productName = record.productName || "Product";
+                  }
+                  
+                  return (
+                    <tr key={record.id} className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                      <td className="px-4 py-3 text-slate-900 dark:text-slate-100">
+                        {productName}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                        {record.quantity}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                        {record.poNumber}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                        {record.invoiceNumber}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                        {formatDate(record.createdAt)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

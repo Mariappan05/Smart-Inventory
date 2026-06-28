@@ -8,6 +8,7 @@ interface TempSupplier {
   tempId: string;
   name: string;
   code: string;
+  gstNumber: string;
   contactEmail: string;
   contactPhone: string;
   address: string;
@@ -22,6 +23,7 @@ export function SupplierCreationView() {
   const [form, setForm] = useState({
     name: "",
     code: "",
+    gstNumber: "",
     contactEmail: "",
     contactPhone: "",
     address: "",
@@ -38,6 +40,13 @@ export function SupplierCreationView() {
     if (!email) return true; // Optional field
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  // GST Number (GSTIN) validation - Indian format
+  const validateGSTIN = (gst: string): boolean => {
+    if (!gst) return false; // mandatory
+    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    return gstinRegex.test(gst.toUpperCase());
   };
 
   // Phone number validation (Indian format: +91 XXXXXXXXXX or just 10 digits)
@@ -68,6 +77,15 @@ export function SupplierCreationView() {
 
     if (!form.code.trim()) {
       newErrors.push({ field: "code", message: "Supplier code is required" });
+    }
+
+    if (!form.gstNumber.trim()) {
+      newErrors.push({ field: "gstNumber", message: "GST Number is required" });
+    } else if (!validateGSTIN(form.gstNumber.trim())) {
+      newErrors.push({
+        field: "gstNumber",
+        message: "Invalid GSTIN format. Example: 22AAAAA0000A1Z5",
+      });
     }
 
     if (form.contactEmail && !validateEmail(form.contactEmail)) {
@@ -125,6 +143,7 @@ export function SupplierCreationView() {
                 ...s,
                 name: form.name,
                 code: form.code.toUpperCase(),
+                gstNumber: form.gstNumber.toUpperCase(),
                 contactEmail: form.contactEmail,
                 contactPhone: form.contactPhone,
                 address: form.address,
@@ -140,6 +159,7 @@ export function SupplierCreationView() {
         tempId: Date.now().toString(),
         name: form.name,
         code: form.code.toUpperCase(),
+        gstNumber: form.gstNumber.toUpperCase(),
         contactEmail: form.contactEmail,
         contactPhone: form.contactPhone,
         address: form.address,
@@ -155,6 +175,7 @@ export function SupplierCreationView() {
     setForm({
       name: supplier.name,
       code: supplier.code,
+      gstNumber: supplier.gstNumber,
       contactEmail: supplier.contactEmail,
       contactPhone: supplier.contactPhone,
       address: supplier.address,
@@ -175,6 +196,7 @@ export function SupplierCreationView() {
     setForm({
       name: "",
       code: "",
+      gstNumber: "",
       contactEmail: "",
       contactPhone: "",
       address: "",
@@ -221,6 +243,7 @@ export function SupplierCreationView() {
             body: JSON.stringify({
               name: supplier.name,
               code: supplier.code,
+              gstNumber: supplier.gstNumber,
               contactEmail: supplier.contactEmail || null,
               contactPhone: supplier.contactPhone || null,
               address: supplier.address || null,
@@ -363,6 +386,51 @@ export function SupplierCreationView() {
               )}
             </div>
 
+            {/* GST Number */}
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                GST Number (GSTIN) <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={form.gstNumber}
+                  onChange={(e) => {
+                    setForm({ ...form, gstNumber: e.target.value.toUpperCase() });
+                    setErrors(errors.filter((err) => err.field !== "gstNumber"));
+                  }}
+                  placeholder="e.g. 22AAAAA0000A1Z5"
+                  maxLength={15}
+                  className={`w-full rounded-lg border bg-white px-4 py-2 font-mono text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 dark:bg-slate-700 dark:text-white ${
+                    hasFieldError("gstNumber")
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : form.gstNumber && validateGSTIN(form.gstNumber)
+                      ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+                      : "border-slate-300 focus:border-blue-500 focus:ring-blue-500 dark:border-slate-600"
+                  }`}
+                />
+                {hasFieldError("gstNumber") && (
+                  <AlertCircle className="absolute right-3 top-3 h-5 w-5 text-red-500" />
+                )}
+                {!hasFieldError("gstNumber") && form.gstNumber && validateGSTIN(form.gstNumber) && (
+                  <CheckCircle className="absolute right-3 top-3 h-5 w-5 text-green-500" />
+                )}
+              </div>
+              {hasFieldError("gstNumber") && (
+                <p className="mt-1 text-xs text-red-500">{getFieldError("gstNumber")}</p>
+              )}
+              {!hasFieldError("gstNumber") && form.gstNumber && validateGSTIN(form.gstNumber) && (
+                <p className="mt-1 flex items-center gap-1 text-xs text-green-600">
+                  <CheckCircle className="h-3.5 w-3.5" /> Valid GSTIN
+                </p>
+              )}
+              {!hasFieldError("gstNumber") && !validateGSTIN(form.gstNumber) && form.gstNumber.length > 0 && (
+                <p className="mt-1 text-xs text-amber-600">
+                  Format: 2-digit state code + 5 letters + 4 digits + 1 letter + 1 digit/letter + Z + 1 digit/letter
+                </p>
+              )}
+            </div>
+
             {/* Email */}
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -490,6 +558,9 @@ export function SupplierCreationView() {
                   Code
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  GST Number
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
                   Email
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -514,6 +585,9 @@ export function SupplierCreationView() {
                   </td>
                   <td className="px-6 py-3 text-sm text-slate-600 dark:text-slate-400">
                     {supplier.code}
+                  </td>
+                  <td className="px-6 py-3 text-sm font-mono text-slate-600 dark:text-slate-400">
+                    {supplier.gstNumber || "-"}
                   </td>
                   <td className="px-6 py-3 text-sm text-slate-600 dark:text-slate-400">
                     {supplier.contactEmail || "-"}

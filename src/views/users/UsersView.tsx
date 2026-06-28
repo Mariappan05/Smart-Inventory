@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, X, Loader2, Upload, User, Eye, EyeOff, Trash2, Edit2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, X, Loader2, Upload, User, Eye, EyeOff, Trash2, Edit2, Shield, Lock } from "lucide-react";
 import { fmtDate } from "@/utils/dateFormat";
 import toast from "react-hot-toast";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -48,6 +48,61 @@ export function UsersView({ initialUsers, stores }: UsersViewProps) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
+
+  // Granular page permissions states
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [permissionsUser, setPermissionsUser] = useState<UserType | null>(null);
+  const [userPermissions, setUserPermissions] = useState<any[]>([]);
+  const [loadingPermissions, setLoadingPermissions] = useState(false);
+  const [savingPermissions, setSavingPermissions] = useState(false);
+
+  const handleOpenPermissions = async (user: UserType) => {
+    setPermissionsUser(user);
+    setShowPermissionsModal(true);
+    setLoadingPermissions(true);
+    try {
+      const res = await fetch(`/api/users/${user.id}/permissions`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setUserPermissions(data.data);
+      } else {
+        toast.error("Failed to load permissions");
+      }
+    } catch {
+      toast.error("Error loading permissions");
+    } finally {
+      setLoadingPermissions(false);
+    }
+  };
+
+  const handleSavePermissions = async () => {
+    if (!permissionsUser) return;
+    setSavingPermissions(true);
+    try {
+      const res = await fetch(`/api/users/${permissionsUser.id}/permissions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ permissions: userPermissions }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Permissions updated successfully");
+        setShowPermissionsModal(false);
+      } else {
+        toast.error(data.message || "Failed to save permissions");
+      }
+    } catch {
+      toast.error("Error saving permissions");
+    } finally {
+      setSavingPermissions(false);
+    }
+  };
+
+  const handlePermissionChange = (moduleName: string, field: string, value: boolean) => {
+    setUserPermissions(prev =>
+      prev.map(p => p.pageName === moduleName ? { ...p, [field]: value } : p)
+    );
+  };
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -304,6 +359,13 @@ export function UsersView({ initialUsers, stores }: UsersViewProps) {
                     <td className="px-3 py-3 text-center">
                       {isAdmin && (
                         <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => handleOpenPermissions(user)}
+                            className="p-1.5 text-slate-600 hover:bg-amber-100 hover:text-amber-600 rounded transition-colors dark:text-slate-400 dark:hover:bg-amber-900/20 dark:hover:text-amber-400"
+                            title="Manage granular permissions"
+                          >
+                            <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          </button>
                           <button
                             onClick={() => handleEdit(user)}
                             className="p-1.5 text-slate-600 hover:bg-blue-100 hover:text-blue-600 rounded transition-colors dark:text-slate-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
@@ -637,6 +699,125 @@ export function UsersView({ initialUsers, stores }: UsersViewProps) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Permissions Modal */}
+      {showPermissionsModal && permissionsUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-4xl max-h-[85vh] animate-scale-in rounded-3xl border border-slate-200 bg-white p-6 shadow-xl overflow-y-auto dark:border-slate-700 dark:bg-slate-900">
+            <div className="mb-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-amber-500" />
+                  Granular Page Permissions
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Configure CRUD access for user: <span className="font-semibold">{permissionsUser.name}</span> ({permissionsUser.email})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPermissionsModal(false)}
+                className="rounded-lg p-1 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              </button>
+            </div>
+
+            {loadingPermissions ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 dark:bg-slate-800 font-semibold text-slate-700 dark:text-slate-300">
+                      <tr className="border-b border-slate-200 dark:border-slate-700">
+                        <th className="px-4 py-3 text-left">Module Name</th>
+                        <th className="px-4 py-3 text-center">View</th>
+                        <th className="px-4 py-3 text-center">Create</th>
+                        <th className="px-4 py-3 text-center">Edit</th>
+                        <th className="px-4 py-3 text-center">Delete</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                      {userPermissions.map((p) => (
+                        <tr key={p.pageName} className="hover:bg-slate-50/50">
+                          <td className="px-4 py-3 font-medium">{p.pageName}</td>
+                          
+                          {/* View Checkbox */}
+                          <td className="px-4 py-3 text-center">
+                            <input
+                              type="checkbox"
+                              checked={p.canView}
+                              onChange={(e) => handlePermissionChange(p.pageName, "canView", e.target.checked)}
+                              className="h-4 w-4 rounded border-slate-300 text-black focus:ring-black"
+                            />
+                          </td>
+
+                          {/* Create Checkbox */}
+                          <td className="px-4 py-3 text-center">
+                            <input
+                              type="checkbox"
+                              checked={p.canCreate}
+                              onChange={(e) => handlePermissionChange(p.pageName, "canCreate", e.target.checked)}
+                              className="h-4 w-4 rounded border-slate-300 text-black focus:ring-black"
+                            />
+                          </td>
+
+                          {/* Edit Checkbox */}
+                          <td className="px-4 py-3 text-center">
+                            <input
+                              type="checkbox"
+                              checked={p.canEdit}
+                              onChange={(e) => handlePermissionChange(p.pageName, "canEdit", e.target.checked)}
+                              className="h-4 w-4 rounded border-slate-300 text-black focus:ring-black"
+                            />
+                          </td>
+
+                          {/* Delete Checkbox */}
+                          <td className="px-4 py-3 text-center">
+                            <input
+                              type="checkbox"
+                              checked={p.canDelete}
+                              onChange={(e) => handlePermissionChange(p.pageName, "canDelete", e.target.checked)}
+                              className="h-4 w-4 rounded border-slate-300 text-black focus:ring-black"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPermissionsModal(false)}
+                    className="flex-1 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSavePermissions}
+                    disabled={savingPermissions}
+                    className="flex-1 rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-900 disabled:opacity-50 dark:bg-slate-950 dark:hover:bg-black"
+                  >
+                    {savingPermissions ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </span>
+                    ) : (
+                      "Save Permissions"
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -62,6 +62,15 @@ export function RequestView() {
     machineCode: "",
   });
 
+  const [componentLifeSpan, setComponentLifeSpan] = useState<number | null>(null);
+  const [loadingLifeSpan, setLoadingLifeSpan] = useState(false);
+
+  // Compute Required Quantity inline
+  const calculatedRequiredQty =
+    componentLifeSpan && componentLifeSpan > 0 && form.productionQuantity > 0
+      ? Math.ceil(form.productionQuantity / componentLifeSpan)
+      : null;
+
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -82,11 +91,28 @@ export function RequestView() {
   useEffect(() => {
     if (form.componentId) {
       fetchToolsForComponent(form.componentId);
+      setComponentLifeSpan(null);
+      setForm(prev => ({ ...prev, toolName: "" }));
     } else {
       setTools([]);
+      setComponentLifeSpan(null);
       setForm(prev => ({ ...prev, toolName: "" }));
     }
   }, [form.componentId]);
+
+  // When tool name changes, fetch its lifeSpan
+  useEffect(() => {
+    if (form.toolName && tools.length > 0) {
+      const selectedTool = tools.find(t => t.toolName === form.toolName);
+      if (selectedTool) {
+        fetchLifeSpan(selectedTool.id);
+      } else {
+        setComponentLifeSpan(null);
+      }
+    } else {
+      setComponentLifeSpan(null);
+    }
+  }, [form.toolName]);
 
   const fetchUserStore = async () => {
     try {
@@ -157,6 +183,25 @@ export function RequestView() {
     } catch (error) {
       console.error("Error fetching tools:", error);
       toast.error("Failed to fetch tools");
+    }
+  };
+
+  const fetchLifeSpan = async (toolId: string) => {
+    try {
+      setLoadingLifeSpan(true);
+      const res = await fetch(`/api/tools/${toolId}`);
+      const data = await res.json();
+      if (data.success && data.data?.operations) {
+        const ops = Array.isArray(data.data.operations) ? data.data.operations : JSON.parse(data.data.operations || '[]');
+        const firstLifeSpan = ops[0]?.lifeSpan;
+        setComponentLifeSpan(firstLifeSpan ? parseFloat(firstLifeSpan) : null);
+      } else {
+        setComponentLifeSpan(null);
+      }
+    } catch {
+      setComponentLifeSpan(null);
+    } finally {
+      setLoadingLifeSpan(false);
     }
   };
 
@@ -486,6 +531,25 @@ export function RequestView() {
                 }
                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
               />
+              {/* Required Quantity Calculation */}
+              {form.toolName && (
+                <div className="mt-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-950">
+                  {loadingLifeSpan ? (
+                    <p className="text-xs text-blue-600 dark:text-blue-400">Fetching component life span...</p>
+                  ) : componentLifeSpan ? (
+                    <>
+                      <p className="text-xs text-blue-700 dark:text-blue-300">
+                        <span className="font-semibold">Component Life Span:</span> {componentLifeSpan} pcs/tool
+                      </p>
+                      <p className="text-xs text-blue-900 dark:text-blue-100 font-semibold mt-0.5">
+                        Required Quantity = {form.productionQuantity} ÷ {componentLifeSpan} = <span className="text-blue-700 dark:text-blue-300 text-sm">{calculatedRequiredQty} tool(s)</span>
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-slate-500 dark:text-slate-400">No life span data found for selected tool</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Machine Number */}

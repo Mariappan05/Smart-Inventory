@@ -10,13 +10,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    verifyAuthToken(token);
+    const payload = verifyAuthToken(token);
 
     const pos = await prisma.supplierPO.findMany({
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ success: true, data: pos });
+    // For non-admin: mask price fields
+    const isAdmin = payload.role === "ADMIN";
+    const sanitized = pos.map((po) => ({
+      ...po,
+      totalAmount: isAdmin ? po.totalAmount : null,
+      _priceHidden: !isAdmin,
+    }));
+
+    return NextResponse.json({ success: true, data: sanitized });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, message: error.message || "Failed to fetch supplier POs" },
@@ -47,12 +55,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Only ADMIN can set price
+    const resolvedAmount =
+      payload.role === "ADMIN" && totalAmount !== undefined && totalAmount !== null
+        ? parseFloat(totalAmount)
+        : null;
+
     const po = await prisma.supplierPO.create({
       data: {
         poNumber: poNumber || `PO-${Date.now()}`,
         supplierName,
         supplierCode: supplierCode || null,
-        totalAmount: totalAmount ? parseFloat(totalAmount) : null,
+        totalAmount: resolvedAmount,
         notes: notes || null,
         pdfUrl: pdfUrl || null,
         pdfFileName: pdfFileName || null,

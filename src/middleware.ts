@@ -46,6 +46,7 @@ function isAuthHandledByRoute(pathname: string): boolean {
     "/api/production",
     "/api/production-component-codes",
     "/api/production-history",
+    "/api/product-process",
     "/api/reports",
     "/api/alerts",
     "/api/stores",
