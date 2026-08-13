@@ -104,7 +104,7 @@ tunnel.js
 
 # Legacy folders
 prisma/migrations_legacy/
-api/
+/api/
 
 # Build outputs
 build_*.log
