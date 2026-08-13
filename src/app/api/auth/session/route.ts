@@ -56,6 +56,43 @@ export async function GET(request: Request) {
           imageUrl = user.images?.[0]?.url || null;
           store = user.store;
           pagePermissions = user.pagePermissions;
+
+          // Re-sign token with latest permissions and save in cookie to sync it
+          try {
+            const formattedPerms: Record<string, any> = {};
+            pagePermissions.forEach((p: any) => {
+              formattedPerms[p.pageName] = {
+                canView: p.canView,
+                canCreate: p.canCreate,
+                canEdit: p.canEdit,
+                canDelete: p.canDelete
+              };
+            });
+            
+            const secret = process.env.JWT_SECRET;
+            if (secret) {
+              const { signAuthToken } = require("@/lib/auth/jwt");
+              const newToken = signAuthToken({
+                sub: payload.sub,
+                role: payload.role,
+                name: user.name,
+                email: payload.email,
+                storeId: user.storeId,
+                pagePermissions: formattedPerms
+              });
+              
+              // Set the new token in the cookie
+              cookieStore.set(authCookieName, newToken, {
+                httpOnly: true,
+                sameSite: "lax",
+                secure: process.env.NODE_ENV === "production",
+                path: "/",
+                maxAge: 60 * 60 * 24 * 7 // 7 days
+              });
+            }
+          } catch (tokenErr) {
+            console.error("Failed to refresh token with updated permissions:", tokenErr);
+          }
         }
       } catch {
         // Database unavailable — fall back to token payload data
