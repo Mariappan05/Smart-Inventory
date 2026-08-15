@@ -198,7 +198,7 @@ export function TentativeScheduleView({ onScheduleCreated }: { onScheduleCreated
                 rate: tool.rate,
                 operationName: operation.name,
                 lifeSpan: operation.lifeSpan,
-                calculatedQuantity: Math.ceil(quantity / operation.lifeSpan),
+                calculatedQuantity: Math.ceil(quantity / (operation.lifeSpan > 0 ? operation.lifeSpan : 1)),
               });
             });
           }
@@ -274,7 +274,7 @@ export function TentativeScheduleView({ onScheduleCreated }: { onScheduleCreated
               componentQuantity: newTotalQuantity,
               tools: calculatedTools.map((tool) => ({
                 ...tool,
-                calculatedQuantity: Math.ceil(newTotalQuantity / tool.lifeSpan),
+                calculatedQuantity: Math.ceil(newTotalQuantity / (tool.lifeSpan > 0 ? tool.lifeSpan : 1)),
               })),
             };
           }

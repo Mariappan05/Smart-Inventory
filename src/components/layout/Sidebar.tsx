@@ -80,6 +80,7 @@ const allNavItems = [
 export function Sidebar() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userStore, setUserStore] = useState<any>(null);
+  const [userPermissions, setUserPermissions] = useState<any[]>([]);
   const [defaultStore, setDefaultStore] = useState<any>(null);
   const [incomingRequestCount, setIncomingRequestCount] = useState(0);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -94,10 +95,14 @@ export function Sidebar() {
         if (data.store) {
           setUserStore(data.store);
         }
+        if (data.pagePermissions) {
+          setUserPermissions(data.pagePermissions);
+        }
       })
       .catch(() => {
         setUserRole(null);
         setUserStore(null);
+        setUserPermissions([]);
       });
   }, []);
 
@@ -143,6 +148,18 @@ export function Sidebar() {
     // Check if user has the required role
     if (!userRole || !item.roles.includes(userRole)) {
       return false;
+    }
+
+    // Check granular page permissions if present
+    if (userPermissions && userPermissions.length > 0) {
+      const moduleName = item.label === "Production Entry" ? "Production Entry"
+        : item.label === "Product Process" ? "Product Process"
+        : item.label;
+
+      const perm = userPermissions.find(p => p.pageName === moduleName);
+      if (perm && !perm.canView) {
+        return false;
+      }
     }
     
     // Special check for Incoming Requests - only show for default store admin

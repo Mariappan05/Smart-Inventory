@@ -61,6 +61,7 @@ export const createProductSchema = z.object({
   rawMaterialType: z.string().min(1, "Raw material type is required").max(100).trim(),
   rmSupplier: z.string().min(1, "RM supplier is required").max(255).trim(),
   rmPrice: z.number({ invalid_type_error: "Valid RM price is required" }).min(0),
+  supplierId: z.string().optional().nullable(),
 });
 
 // ── Supplier schemas ──────────────────────────────────────────────────────────

@@ -24,6 +24,7 @@ interface ProductItem {
   rawMaterialType: string;
   rmSupplier: string;
   rmPrice: number;
+  supplierId: string;
 }
 
 interface CreatedProduct {
@@ -37,6 +38,7 @@ interface CreatedProduct {
   rmSupplier?: string;
   rmPrice?: number;
   createdAt: string;
+  supplierId?: string;
 }
 
 export default function NewProductPage() {
@@ -44,6 +46,7 @@ export default function NewProductPage() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [stores, setStores] = useState<Store[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [products, setProducts] = useState<CreatedProduct[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showCreatedProducts, setShowCreatedProducts] = useState(false);
@@ -55,6 +58,7 @@ export default function NewProductPage() {
     rawMaterialType: "",
     rmSupplier: "",
     rmPrice: "",
+    supplierId: "",
   });
   
   const [form, setForm] = useState({
@@ -66,6 +70,7 @@ export default function NewProductPage() {
     rawMaterialType: "",
     rmSupplier: "",
     rmPrice: "",
+    supplierId: "",
   });
 
   const [pendingProducts, setPendingProducts] = useState<ProductItem[]>([]);
@@ -93,6 +98,7 @@ export default function NewProductPage() {
 
         setUserRole(role);
         fetchStores();
+        fetchSuppliers();
         fetchProducts();
       } catch (error) {
         router.push("/login");
@@ -117,6 +123,35 @@ export default function NewProductPage() {
     }
   };
 
+  const fetchSuppliers = async () => {
+    try {
+      const res = await fetch("/api/suppliers");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setSuppliers(data);
+      }
+    } catch (error) {
+      console.error("Error fetching suppliers:", error);
+    }
+  };
+
+  const handleSupplierSelect = (supplierId: string) => {
+    const selectedSupplier = suppliers.find((s) => s.id === supplierId);
+    if (selectedSupplier) {
+      setForm({
+        ...form,
+        supplierId,
+        rmSupplier: selectedSupplier.name,
+      });
+    } else {
+      setForm({
+        ...form,
+        supplierId: "",
+        rmSupplier: "",
+      });
+    }
+  };
+
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -136,7 +171,8 @@ export default function NewProductPage() {
             customerName,
             rawMaterialType: p.lifeDuration || "",
             rmSupplier: p.variant || "",
-            rmPrice: p.unitPrice || 0
+            rmPrice: p.unitPrice || 0,
+            supplierId: p.supplierId || "",
           };
         });
         setProducts(productsWithStore);
@@ -237,6 +273,7 @@ export default function NewProductPage() {
       rawMaterialType: product.rawMaterialType || "",
       rmSupplier: product.rmSupplier || "",
       rmPrice: product.rmPrice?.toString() || "",
+      supplierId: product.supplierId || "",
     });
   };
 
@@ -251,7 +288,7 @@ export default function NewProductPage() {
       return;
     }
 
-    if (!editProductForm.rmSupplier.trim()) {
+    if (!editProductForm.supplierId.trim()) {
       toast.error("RM supplier is required");
       return;
     }
@@ -272,6 +309,7 @@ export default function NewProductPage() {
           rawMaterialType: editProductForm.rawMaterialType,
           rmSupplier: editProductForm.rmSupplier,
           rmPrice: parseFloat(editProductForm.rmPrice),
+          supplierId: editProductForm.supplierId || null,
         }),
       });
 
@@ -293,6 +331,12 @@ export default function NewProductPage() {
     value: store.id,
     label: store.name,
     subtitle: `Code: ${store.code}`,
+  }));
+
+  const supplierOptions = suppliers.map((supplier) => ({
+    value: supplier.id,
+    label: supplier.name,
+    subtitle: `Code: ${supplier.code}`,
   }));
 
   const handleStoreSelect = (storeId: string) => {
@@ -327,7 +371,7 @@ export default function NewProductPage() {
       toast.error("Raw material type is required");
       return false;
     }
-    if (!form.rmSupplier.trim()) {
+    if (!form.supplierId.trim()) {
       toast.error("RM supplier is required");
       return false;
     }
@@ -361,6 +405,7 @@ export default function NewProductPage() {
       rawMaterialType: form.rawMaterialType,
       rmSupplier: form.rmSupplier,
       rmPrice: parseFloat(form.rmPrice),
+      supplierId: form.supplierId,
     };
 
     if (editingId) {
@@ -388,6 +433,7 @@ export default function NewProductPage() {
       rawMaterialType: "",
       rmSupplier: "",
       rmPrice: "",
+      supplierId: "",
     });
   };
 
@@ -401,6 +447,7 @@ export default function NewProductPage() {
       rawMaterialType: item.rawMaterialType,
       rmSupplier: item.rmSupplier,
       rmPrice: item.rmPrice.toString(),
+      supplierId: item.supplierId || "",
     });
     setEditingId(item.tempId);
   };
@@ -418,6 +465,7 @@ export default function NewProductPage() {
         rawMaterialType: "",
         rmSupplier: "",
         rmPrice: "",
+        supplierId: "",
       });
     }
     toast.success("Item removed");
@@ -447,6 +495,7 @@ export default function NewProductPage() {
               rawMaterialType: product.rawMaterialType,
               rmSupplier: product.rmSupplier,
               rmPrice: product.rmPrice,
+              supplierId: product.supplierId || null,
             }),
           });
 
@@ -601,19 +650,16 @@ export default function NewProductPage() {
               />
             </div>
 
-            {/* RM Supplier */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                RM SUPPLIER <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Enter RM supplier"
-                value={form.rmSupplier}
-                onChange={(e) => setForm({ ...form, rmSupplier: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-              />
-            </div>
+            {/* RM Supplier Selection */}
+            <SearchableSelect
+              label="RM Supplier"
+              required
+              options={supplierOptions}
+              value={form.supplierId}
+              onChange={handleSupplierSelect}
+              placeholder="Select RM supplier..."
+              searchPlaceholder="Search suppliers..."
+            />
 
             {/* RM Price */}
             <div>
@@ -657,6 +703,7 @@ export default function NewProductPage() {
                       rawMaterialType: "",
                       rmSupplier: "",
                       rmPrice: "",
+                      supplierId: "",
                     });
                   }}
                   className="rounded-lg border border-slate-300 px-6 py-2 text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 font-medium"
@@ -927,11 +974,21 @@ export default function NewProductPage() {
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-900 dark:text-slate-100">
                       {editingProductId === product.id ? (
-                        <input
-                          type="text"
-                          value={editProductForm.rmSupplier}
-                          onChange={(e) => setEditProductForm({ ...editProductForm, rmSupplier: e.target.value })}
-                          className="w-full rounded border border-slate-300 px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-700"
+                        <SearchableSelect
+                          options={supplierOptions}
+                          value={editProductForm.supplierId}
+                          onChange={(val) => {
+                            const selected = suppliers.find(s => s.id === val);
+                            if (selected) {
+                              setEditProductForm({
+                                ...editProductForm,
+                                supplierId: val,
+                                rmSupplier: selected.name,
+                              });
+                            }
+                          }}
+                          placeholder="Select RM supplier..."
+                          searchPlaceholder="Search suppliers..."
                         />
                       ) : (
                         product.rmSupplier || "N/A"

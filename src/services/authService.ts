@@ -75,12 +75,32 @@ export class AuthService {
       // Set token expiry based on rememberMe
       const expiresIn = rememberMe ? "30d" : "8h";
 
+      // Fetch user's granular permissions
+      const pagePermissions: Record<string, any> = {};
+      try {
+        const { prisma } = require("@/lib/prisma");
+        const dbPerms = await prisma.userPagePermission.findMany({
+          where: { userId: user.id }
+        });
+        dbPerms.forEach((p: any) => {
+          pagePermissions[p.pageName] = {
+            canView: p.canView,
+            canCreate: p.canCreate,
+            canEdit: p.canEdit,
+            canDelete: p.canDelete
+          };
+        });
+      } catch (permError) {
+        console.warn("[AuthService] Failed to load userPagePermissions during login:", permError);
+      }
+
       const token = jwt.sign({ 
         sub: user.id, 
         role: user.role, 
         name: user.name, 
         email: user.email, 
-        storeId: user.storeId
+        storeId: user.storeId,
+        pagePermissions
       }, secret, { expiresIn });
 
       try {

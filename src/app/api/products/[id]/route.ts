@@ -12,7 +12,7 @@ export async function PATCH(
   try {
     const { id } = await context.params;
     const body = await req.json();
-    const { customerName, name, itemCode, rawMaterialType, rmSupplier, rmPrice } = body;
+    const { customerName, name, itemCode, rawMaterialType, rmSupplier, rmPrice, supplierId } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -65,7 +65,8 @@ export async function PATCH(
         description: `PRODUCT_${customerName}`,
         lifeDuration: rawMaterialType,
         variant: rmSupplier,
-        unitPrice: parseFloat(rmPrice)
+        unitPrice: parseFloat(rmPrice),
+        supplierId: supplierId || null,
       },
     });
 

@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
         unitPrice: true,
         storeId: true,
         createdAt: true,
+        supplierId: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
   // Zod validation
   const parsed = parseBody(createProductSchema, rawBody);
   if ("error" in parsed) return parsed.error;
-  const { customerName, componentName, componentCode, storeId, rawMaterialType, rmSupplier, rmPrice } = parsed.data;
+  const { customerName, componentName, componentCode, storeId, rawMaterialType, rmSupplier, rmPrice, supplierId } = parsed.data;
 
   try {
     // Check for duplicate itemCode within the same store
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
         reorderQuantity: 0,
         storeId,
         createdById: session.userId,
+        supplierId: supplierId || null,
       },
       select: {
         id: true,
@@ -107,6 +109,7 @@ export async function POST(request: NextRequest) {
         unitPrice: true,
         storeId: true,
         createdAt: true,
+        supplierId: true,
       },
     });
 

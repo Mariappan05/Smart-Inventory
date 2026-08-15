@@ -293,3 +293,37 @@ export function hasFullAccess(role: UserRole): boolean {
   // Only ADMIN has full system access
   return role === "ADMIN";
 }
+
+export function getModuleNameFromPath(pathname: string): string | null {
+  let path = pathname;
+  // Strip /api prefix if present
+  if (path.startsWith("/api/")) {
+    path = path.slice(4); // Keep leading slash, e.g. "/api/products" -> "/products"
+  }
+  
+  // Strip trailing slash if present (except for root path)
+  if (path.length > 1 && path.endsWith("/")) {
+    path = path.slice(0, -1);
+  }
+
+  if (path === "/" || path.startsWith("/dashboard")) return "Dashboard";
+  if (path.startsWith("/monthly-plan") || path.startsWith("/monthly-schedule")) return "Monthly Plan";
+  if (path.startsWith("/inward")) return "Inward";
+  if (path.startsWith("/outward")) return "Outward";
+  if (path.startsWith("/products/request") || path === "/request" || path.startsWith("/requests")) return "Request";
+  if (path.startsWith("/incoming-requests")) return "Incoming Requests";
+  if (path.startsWith("/production")) return "Production Entry";
+  if (path.startsWith("/product-process")) return "Product Process";
+  if (path.startsWith("/products")) return "Products";
+  if (path.startsWith("/tools")) return "Tools";
+  if (path.startsWith("/suppliers")) return "Suppliers";
+  if (path.startsWith("/machines")) return "Machines";
+  if (path.startsWith("/supplier-po")) return "Supplier PO";
+  if (path.startsWith("/store-rooms")) return "Store Rooms";
+  if (path.startsWith("/maintenance")) return "Maintenance";
+  if (path.startsWith("/reports")) return "Reports";
+  if (path.startsWith("/alerts")) return "Alerts";
+
+  return null;
+}
+

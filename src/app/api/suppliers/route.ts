@@ -85,9 +85,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for duplicate name within the same store
+    // Check for duplicate name globally
     const existingName = await prisma.supplier.findFirst({
-      where: { name, storeId },
+      where: { name },
     });
 
     if (existingName) {
@@ -95,15 +95,15 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: "Duplicate supplier",
-          message: `Supplier "${name}" already exists in your store. Please use a different name.`,
+          message: `Supplier "${name}" already exists in the system. Please use a different name.`,
         },
         { status: 409 }
       );
     }
 
-    // Check for duplicate code within the same store
+    // Check for duplicate code globally
     const existingCode = await prisma.supplier.findFirst({
-      where: { code, storeId },
+      where: { code },
     });
 
     if (existingCode) {
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: "Duplicate supplier code",
-          message: `Supplier code "${code}" already exists in your store. Please use a different code.`,
+          message: `Supplier code "${code}" already exists in the system. Please use a different code.`,
         },
         { status: 409 }
       );
@@ -144,6 +144,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: supplier });
   } catch (error) {
+    console.error("Error in POST /api/suppliers:", error);
     return NextResponse.json(
       { success: false, message: "Failed to create supplier" },
       { status: 500 }

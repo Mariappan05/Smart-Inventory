@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { authCookieName } from "@/lib/auth/session";
-import { canAccessPath, type UserRole } from "@/lib/auth/permissions";
+import { canAccessPath, getModuleNameFromPath, type UserRole } from "@/lib/auth/permissions";
 import { verifyAuthToken } from "@/lib/auth/jwt";
 import { securityConfig } from "@/config/security";
 
@@ -203,6 +203,45 @@ export async function middleware(request: NextRequest) {
   try {
     const payload = verifyAuthToken(token);
     const role = payload.role as UserRole;
+    const pagePermissions = (payload as any).pagePermissions;
+
+    // Enforce granular page permissions if they are present in the token
+    if (pagePermissions) {
+      const moduleName = getModuleNameFromPath(pathname);
+      if (moduleName && pagePermissions[moduleName]) {
+        const perm = pagePermissions[moduleName];
+        let isAllowed = true;
+
+        if (isApiRoute) {
+          const method = request.method;
+          if (method === "GET") {
+            isAllowed = perm.canView;
+          } else if (method === "POST") {
+            isAllowed = perm.canCreate;
+          } else if (method === "PUT" || method === "PATCH") {
+            isAllowed = perm.canEdit;
+          } else if (method === "DELETE") {
+            isAllowed = perm.canDelete;
+          }
+        } else {
+          isAllowed = perm.canView;
+        }
+
+        if (!isAllowed) {
+          if (isApiRoute) {
+            return applySecurityHeaders(
+              NextResponse.json(
+                { success: false, message: `Access denied for module: ${moduleName}` },
+                { status: 403 }
+              )
+            );
+          }
+          const accessDeniedUrl = request.nextUrl.clone();
+          accessDeniedUrl.pathname = "/access-denied";
+          return NextResponse.redirect(accessDeniedUrl);
+        }
+      }
+    }
 
     // Routes that handle their own permissions internally
     if (isAuthHandledByRoute(pathname)) {

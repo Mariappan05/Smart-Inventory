@@ -23,7 +23,7 @@ export function SuppliersView({ initialSuppliers }: { initialSuppliers: Supplier
   const [showSuppliers, setShowSuppliers] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: "", code: "", contactEmail: "", contactPhone: "", address: "" });
+  const [form, setForm] = useState({ name: "", code: "", gstNumber: "", contactEmail: "", contactPhone: "", address: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +45,7 @@ export function SuppliersView({ initialSuppliers }: { initialSuppliers: Supplier
       toast.success("Supplier created successfully");
       setSuppliers([{ ...result.data, _count: { products: 0 } }, ...suppliers]);
       setShowModal(false);
-      setForm({ name: "", code: "", contactEmail: "", contactPhone: "", address: "" });
+      setForm({ name: "", code: "", gstNumber: "", contactEmail: "", contactPhone: "", address: "" });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to create supplier");
     } finally {
@@ -153,6 +153,20 @@ export function SuppliersView({ initialSuppliers }: { initialSuppliers: Supplier
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Code <span className="text-rose-500">*</span></label>
                 <input type="text" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="ATLAS" required className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-slate-400" />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">GST Number (GSTIN) <span className="text-rose-500">*</span></label>
+                <input
+                  type="text"
+                  value={form.gstNumber}
+                  onChange={(e) => setForm({ ...form, gstNumber: e.target.value.toUpperCase() })}
+                  placeholder="e.g. 22AAAAA0000A1Z5"
+                  required
+                  maxLength={15}
+                  pattern="^[0-9]{2}[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}[1-9A-Za-z]{1}[zZ]{1}[0-9A-Za-z]{1}$"
+                  title="Must be a valid 15-character Indian GSTIN format (e.g., 22AAAAA0000A1Z5)"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-slate-400 font-mono"
+                />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Contact Email</label>
